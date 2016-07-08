@@ -49,7 +49,15 @@ library(TeachingDemos)
   
 setwd(paste0(dataPath, "Tables"))
   
-yrPath <- "07"
+
+TempMn.out <- NULL
+TempMd.out <- NULL
+Yr.out <- NULL
+PrecipMn.out <- NULL
+PrecipMd.out <- NULL
+
+yrPath <- "09"
+
 
   Temp <- data.frame(mup=NULL)
   for (i in 0:11)
@@ -59,8 +67,13 @@ yrPath <- "07"
     }
   
   Temp$Year <- yrPath
-  Temp07 <- Temp
-
+  Temp09 <- Temp
+  TempMn <- mean(unlist(Temp$Mean)) - 273.15
+  TempMd <- median(unlist(Temp$Mean)) - 273.15
+  TempMn.out <- append(TempMn.out, TempMn)
+  TempMd.out <- append(TempMd.out, TempMd)
+  Yr.out <- append(Yr.out, yrPath)
+  
   Precip <- data.frame(mup=NULL)
   for (i in 0:11)
   {
@@ -69,9 +82,17 @@ yrPath <- "07"
   }
   
   Precip$Year <- yrPath
-  Precip07 <- Precip 
+  Precip09 <- Precip 
+  PrecipMn <- mean(unlist(Precip$Mean))
+  PrecipMd <- median(unlist(Precip$Mean))
+  PrecipMn.out <- append(PrecipMn.out, PrecipMn)
+  PrecipMd.out <- append(PrecipMd.out, PrecipMd)
   
-  
+
+##############
+# some plots to look at 
+###############
+    
   plot(1:12, Temp00$Mean, main = "Mean Monthly Surface Air Temperature, Wenatchee, 2000-2009", xlab="Month", ylab="Degrees C", ylim=c(265, 295))
   points(1:12, Temp01$Mean, pch=16, col="blue")
   points(1:12, Temp02$Mean, pch=16, col="red")
@@ -92,6 +113,7 @@ yrPath <- "07"
   lines(1:12, Temp07$Mean, col="palevioletred")
   lines(1:12, Temp08$Mean, col="grey50")
   lines(1:12, Temp09$Mean, col="green")
+  legend("topright", pch=16, title="(K)", legend = c("00","01","02","03","04","05","06","07","08","09"), col=c("black", "blue", "red", "lightblue", "orange", "pink", "purple", "palevioletred", "grey50", "green"), cex=.6)
   
   plot(1:12, Precip00$Mean, main = "Mean Monthly Total Precip, Wenatchee, 2000-2009", xlab="Month", ylab="kgm^2", ylim=c(0, 1.9))
   points(1:12, Precip01$Mean, pch=16, col="blue")
@@ -113,11 +135,14 @@ yrPath <- "07"
   lines(1:12, Precip07$Mean, col="palevioletred")
   lines(1:12, Precip08$Mean, col="grey50")
   lines(1:12, Precip09$Mean, col="green")
+  legend(x=grconvertX(c(1.0,1.4), from='npc'), 
+        y=grconvertY(c(0.6, 0.8), from='npc'), pch=16, title="kg/m^2", bty="n", legend = c("00","01","02","03","04","05","06","07","08","09"), col=c("black", "blue", "red", "lightblue", "orange", "pink", "purple", "palevioletred", "grey50", "green"), cex=.6, xpd=NA)
+  
   mod <- lm(Precip$Mean~Temp$MEAN)
   plot(Temp00$MEAN, Precip$Mean, pch=16, main = "Precipitation by Temperature, Wenatchee, 2000", xlab="Temp", ylab="Precip")
   abline(mod)
   
-  plot(Temp00$Mean, Precip00$Mean, main = "Mean Monthly Temp by Total Precip, Wenatchee, 2000-2009", xlab="Month", ylab="kgm^2", ylim=c(0, 1.9), xlim=c(265, 295))
+  plot(Temp00$Mean, Precip00$Mean, main = "Mean Monthly Total Precip by Temp, Wenatchee, 2000-2009", xlab="Month", ylab="kgm^2", ylim=c(0, 1.9), xlim=c(265, 295))
   points(Temp01$Mean, Precip01$Mean, pch=16, col="blue")
   points(Temp02$Mean, Precip02$Mean, pch=16, col="red")
   points(Temp03$Mean, Precip03$Mean, pch=16, col="lightblue")
@@ -127,72 +152,66 @@ yrPath <- "07"
   points(Temp07$Mean, Precip07$Mean, pch=21, col="palevioletred")
   points(Temp08$Mean, Precip08$Mean, pch=16, col="grey50")
   points(Temp09$Mean, Precip09$Mean, pch=16, col="green")
-  lines(Temp00$Mean, Precip00$Mean, col="black")
-  lines(Temp01$Mean, Precip01$Mean, col="blue")
-  lines(Temp02$Mean, Precip02$Mean, col="red")
-  lines(Temp03$Mean, Precip03$Mean, col="lightblue")
-  lines(Temp04$Mean, Precip04$Mean, col="orange")
-  lines(Temp05$Mean, Precip05$Mean, col="pink")
-  lines(Temp06$Mean, Precip06$Mean, col="purple")
-  lines(Temp07$Mean, Precip07$Mean, col="palevioletred")
-  lines(Temp08$Mean, Precip08$Mean, col="grey50")
-  lines(Temp09$Mean, Precip09$Mean, col="green")
-
+  abline(lm(Precip00$Mean ~ Temp00$Mean), col="black")
+  abline(lm(Precip01$Mean ~ Temp01$Mean), col="blue")
+  abline(lm(Precip02$Mean ~ Temp02$Mean), col="red")
+  abline(lm(Precip03$Mean ~ Temp03$Mean), col="lightblue")
+  abline(lm(Precip04$Mean ~ Temp04$Mean), col="orange")
+  abline(lm(Precip05$Mean ~ Temp05$Mean), col="pink")
+  abline(lm(Precip06$Mean ~ Temp06$Mean), col="purple")
+  abline(lm(Precip07$Mean ~ Temp07$Mean), col="palevioletred")
+  abline(lm(Precip08$Mean ~ Temp08$Mean), col="grey50")
+  abline(lm(Precip09$Mean ~ Temp09$Mean), col="green")
+  legend(x=grconvertX(c(1.0,1.4), from='npc'), 
+         y=grconvertY(c(0.6, 0.8), from='npc'), pch=16, bty="n", legend = c("00","01","02","03","04","05","06","07","08","09"), col=c("black", "blue", "red", "lightblue", "orange", "pink", "purple", "palevioletred", "grey50", "green"), cex=.6, xpd=NA)
+  
+  AllTemp <- rbind(Temp00, Temp01, Temp02, Temp03, Temp04, Temp05, Temp06, Temp07, Temp08, Temp09)
+  plot(AllTemp$Mean)
+  lines(1:120, AllTemp$Mean)
+  allPrecip <- rbind(Precip00, Precip01, Precip02, Precip03, Precip04, Precip05, Precip06, Precip07, Precip08, Precip09)
+  plot(allPrecip$Mean)
+  lines(1:120, allPrecip$Mean)
+  
+  sumPrecip <- NULL
+  sumP <- colSums(Precip00$Mean)
+  sumPrecip <- append(sumPrecip, sum(Precip09$Mean))
+  plot(TempMn.out, sumPrecip, main="Sum precip by Mean temp")
+  
 ################################
-# full year
+# PRISM raster processing
 ###################################
 
-  y <- NoNA.xyz$y
-  x <- NoNA.xyz$x
-  z <- NoNA.xyz$z
-  e <- NoNA.xyz$e
-  plot(x, y)
-  
-  maxrow <- which.max(NoNA.xyz$y)
-  data.sp <- NoNA.xyz[1:maxrow,]
-  data.fall <- NoNA.xyz[maxrow:nrow(NoNA.xyz),]
+  year <- "2009"
+  setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year))
+  library(rgdal)
+  library(raster)
+  library(rNOMADS)
+  library(gdalUtils)
 
-
-  mod <- lm(y ~ x + I(x^2) + z + e)
-  sum_mod <- summary(mod)
-  pred.y <- predict(mod)
-  plot(pred.y, y, main = "8-day Mean Full Year")
-  abline(0,1)
-  post_mod <- summary(lm(y ~ pred.y))
-  gvmodel <- gvlma(mod)
-  summary(gvmodel)
-  plot(mod, which= 1:6)
-  outlierTest(mod)
-  qqPlot(mod, main="QQ Plot Full Year")
-  spreadLevelPlot(mod)
-  plot(pred.y, mod$residuals, main="Model diagnostics Full Year", xlab="Predicted", ylab="Residuals")
+##### create a list of only the grid files in a directory
   
-  pressstat_sum <- PRESS(mod, verbose = "FALSE")
-  RMSEP <- sqrt(mean((pressstat_sum$residuals)^2))
+  allFiles <- list.files(pattern="*bil.bil", full.names=TRUE)
+  xmlFiles <- list.files(pattern="*bil.bil.aux.xml", full.names=TRUE)
+  fileList <- allFiles[!allFiles %in% xmlFiles]
   
-  library(pls)
-  mod2 <- plsr(y ~ x + I(x^2) + e, validation = "LOO")
-  p2 <- R2(mod2)
-  detach("package:pls", unload=TRUE)
+###### read in one grid to get the structure
   
+  r <- readGDAL(fileList[1])
+ 
   
-  pred.out <- matrix(nrow=length(pred.y), ncol=5)
-  pred.out[,1] <- y
-  pred.out[,2] <- pred.y
-  pred.out[,3] <- z
-  pred.out[,4] <- "full year"
-  pred.out[,5] <- yearPath
-  colnames(pred.out) <- c("Y", "PredY", "JulDay", "Season", "Year")
-  write.table (x=pred.out,append=T,row.names=F,file=paste0("jk_pred_v_y_Max_", basin, "_", yearPath, "_full_year.csv"),sep = ",", col.names=F)  
+##### loop thru all the files in the list and add them iteratively
   
-  plot(pred.out[,1], pred.out[,2])
-  summer_pred <- subset(pred.out, z > 181 & z < 258)
-  points(summer_pred[, 1], summer_pred[,2], pch = 16, col = "green")
-  abline(0,1)
-
-  fit <- lm(y~ pred.y)
-  plot(fit)
-  summary(fit)
+  for (i in 2:365)
+  {
+  
+  r2 <- readGDAL(fileList[i])
+  
+  r3@data <- r@data + r2@data
+  r <- r3
+  }
+  
+rgdal
+  writeGDAL(r, "SumPpt2009.tif",)
 #####################################
 # spring/fall
 ######################################

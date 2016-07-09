@@ -181,13 +181,15 @@ yrPath <- "09"
 # PRISM raster processing
 ###################################
 
-  year <- "2009"
-  setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year))
+  
   library(rgdal)
   library(raster)
   library(rNOMADS)
   library(gdalUtils)
 
+  year <- "2011"
+  setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year))
+  varName <- "Cppt11"
 ##### create a list of only the grid files in a directory
   
   allFiles <- list.files(pattern="*bil.bil", full.names=TRUE)
@@ -197,45 +199,54 @@ yrPath <- "09"
 ###### read in one grid to get the structure
   
   r <- readGDAL(fileList[1])
- 
+  rRaster <- raster(fileList[1])
+  
+##### clip the raster to a reasonable PNW extent
+  
+  ext <- extent(-125, -107, 40, 50)
+  rExt <- crop(rRaster, ext)
+
+##### convert the raster to points and build the data structure for the loop
+  
+  rPoints <- rasterToPoints(rExt)
+  
+  pts <- data.frame(rPoints[,1], rPoints[,2])
+  data.out <- data.frame(pts, extract(rRaster, pts))
+  colnames(data.out) <- c("x", "y", paste0(varName,"001"))
+  #rPoints1 <- SpatialPoints(coordinates(rPoints), proj4string = CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"))
   
 ##### loop thru all the files in the list and add them iteratively
   
   for (i in 2:365)
-  {
+    {
+    
+    r2 <- raster(fileList[i])
+    extData <- extract(r2, pts)
+    sumData <- extData + data.out[,i+1]
+    data.out <- cbind(data.out, sumData)
+    namer <- sprintf('%03d', i)
+    colnames(data.out)[i+2] <- paste0(varName, namer)
+    }
   
-  r2 <- readGDAL(fileList[i])
+  data.out$PtID <- 1:89175
+  write.dbf(data.out, "SumPpt2011.dbf")
+  data.out11 <- data.out
   
-  r3@data <- r@data + r2@data
-  r <- r3
-  }
+#####
+# Subsetting and summarizing by basin
+#####
   
-rgdal
-  writeGDAL(r, "SumPpt2009.tif",)
-#####################################
-# spring/fall
-######################################
+  basinPts <- read.dbf("D:/OneDrive/work/GIS/PRISM/Wen_prism_pts.dbf")
+  data.out11_Wen <- data.out11[data.out11$PtID %in% basinPts$PtID,]
+  Wen_11_mn <- colMeans(data.out11_Wen)
+  plot(Wen_10_mn[3:367], pch=16, col="lightgrey", main = "Mean cumulative precip (mm), Wenatchee basin, 2007-2010", xlab="Julian Day", ylab="Precip")
+  points(Wen_09_mn[3:367], pch=16, col="black")
+  points(Wen_08_mn[3:367], pch=16, col="lightblue")
+  points(Wen_07_mn[3:367], pch=16, col="red")
+  points(Wen_11_mn[3:367], pch=16, col="palevioletred")
+  legend(x=grconvertX(c(1.0,1.4), from='npc'), 
+         y=grconvertY(c(0.6, 0.8), from='npc'), pch=16, bty="n", legend = c("07","08","09", "10", "11"), col=c("red", "lightblue", "black", "lightgrey", "palevioletred"), cex=.6, xpd=NA)
   
-
-  coeffs_out <- data.frame(Int=numeric(2), bLST=numeric(2), bLST2=numeric(2), bJul=numeric(2), bElev=numeric(2))
-  metrics_out <- data.frame(r2=numeric(2), RMSE=numeric(2), p2=numeric(2), RMSEP=numeric(2), N_Sites=numeric(2), N=numeric(2))
-  rownames(metrics_out) <- c("Spring", "Fall")
-  rownames(coeffs_out) <- c("Spring", "Fall")
-
-  y <- data.sp$y
-  x <- data.sp$x
-  z <- data.sp$z
-  e <- data.sp$e
-  plot(z, y)  
-  plot(x, y, main="spring")
-  
-  mod <- lm(y ~ x + I(x^2) + z + e)
-  sum_mod <- summary(mod)
-  sum_mod
-  pressstat_sum <- PRESS(sum_mod, verbose = "FALSE")
-  pressstat_sum$stat
-
-
 ###########################################
     
   

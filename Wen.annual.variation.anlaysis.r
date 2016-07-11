@@ -187,9 +187,10 @@ yrPath <- "09"
   library(rNOMADS)
   library(gdalUtils)
 
-  year <- "2011"
+  year <- "2015"
+  yr <- "15"
   setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year))
-  varName <- "Cppt11"
+  varName <- paste0("Cppt", yr)
 ##### create a list of only the grid files in a directory
   
   allFiles <- list.files(pattern="*bil.bil", full.names=TRUE)
@@ -229,160 +230,123 @@ yrPath <- "09"
     }
   
   data.out$PtID <- 1:89175
-  write.dbf(data.out, "SumPpt2011.dbf")
-  data.out11 <- data.out
+  write.dbf(data.out, file= paste0("SumPpt", year, ".dbf"))
+  data.out15 <- data.out
   
 #####
 # Subsetting and summarizing by basin
 #####
   
   basinPts <- read.dbf("D:/OneDrive/work/GIS/PRISM/Wen_prism_pts.dbf")
-  data.out11_Wen <- data.out11[data.out11$PtID %in% basinPts$PtID,]
-  Wen_11_mn <- colMeans(data.out11_Wen)
-  plot(Wen_10_mn[3:367], pch=16, col="lightgrey", main = "Mean cumulative precip (mm), Wenatchee basin, 2007-2010", xlab="Julian Day", ylab="Precip")
-  points(Wen_09_mn[3:367], pch=16, col="black")
-  points(Wen_08_mn[3:367], pch=16, col="lightblue")
-  points(Wen_07_mn[3:367], pch=16, col="red")
-  points(Wen_11_mn[3:367], pch=16, col="palevioletred")
+  data.out15_Wen <- data.out[data.out$PtID %in% basinPts$PtID,]
+  Wen_15_mn <- colMeans(data.out15_Wen)
+  plot(Wen_10_mn[3:367], pch=16, col="lightgrey", cex=.7, main = "Mean cumulative precip (mm), Wenatchee basin, 2007-2015", xlab="Julian Day", ylab="Precip", ylim=c(0,1600))
+  points(Wen_09_mn[3:367], pch=16, col="black", cex=.7)
+  points(Wen_08_mn[3:367], pch=16, col="lightblue", cex=.7)
+  points(Wen_07_mn[3:367], pch=16, col="red", cex=.7)
+  points(Wen_11_mn[3:367], pch=16, col="palevioletred", cex=.7)
+  points(Wen_12_mn[3:367], pch=16, col="darkolivegreen4", cex=.7)
+  points(Wen_13_mn[3:367], pch=16, col="darkturquoise", cex=.7)
+  points(Wen_14_mn[3:367], pch=16, col="chartreuse2", cex=.7)
+  points(Wen_15_mn[3:367], pch=15, col="blue2", cex=.7)
   legend(x=grconvertX(c(1.0,1.4), from='npc'), 
-         y=grconvertY(c(0.6, 0.8), from='npc'), pch=16, bty="n", legend = c("07","08","09", "10", "11"), col=c("red", "lightblue", "black", "lightgrey", "palevioletred"), cex=.6, xpd=NA)
+         y=grconvertY(c(0.6, 0.8), from='npc'), pch=16, bty="n", legend = c("07","08","09", "10", "11", "12", "13", "14", "15"), col=c("red", "lightblue", "black", "lightgrey", "palevioletred", "darkolivegreen4", "darkturquoise", "chartreuse2", "blue2"), cex=.65, xpd=NA)
   
 ###########################################
-    
-  
-  coeffs <- as.matrix(coefficients(mod))
-  pred.y <- predict(mod)
-  pred.y[pred.y < -0.5] = -0.5
-  
-  pred.new <- predict(mod, data = data.sp)
-  pred.new[pred.new < -0.5] = -0.5
-  
-  data.sp$pred <- unlist(pred.new)
-  plot(pred.y, y, main = "8-day Mn Spring Leg")
-  abline(0,1)
-  post_mod <- summary(lm(y ~ pred.y))
-  gvmodel <- gvlma(mod)
-  summary(gvmodel)
-  plot(mod, which= 1:5)
-  outlierTest(mod)
-  qqPlot(mod, main="QQ Plot Spring Leg")
-  spreadLevelPlot(mod)
-  plot(pred.y, mod$residuals, main="Model diagnostics Spring Leg", xlab="Predicted", ylab="Residuals")
-  
-  pressstat_sum <- PRESS(sum_mod, verbose = "FALSE")
-  RMSEP <- sqrt(mean((pressstat_sum$residuals)^2))
-  
-  library(pls)
-  mod2 <- plsr(y ~ x + I(x^2) + z + e, validation = "LOO")
-  p2 <- R2(mod2)
-  detach("package:pls", unload=TRUE)
+# parsing annual data into water-year sets
+##########
+  ext <- extent(-125, -107, 40, 50)
+  basinPts <- read.dbf("D:/OneDrive/work/GIS/PRISM/Wen_prism_pts.dbf")
   
   
-  pred.out <- matrix(nrow=length(pred.y), ncol=5)
-  pred.out[,1] <- y
-  pred.out[,2] <- pred.y
-  pred.out[,3] <- z
-  pred.out[,4] <- "Spring"
-  pred.out[,5] <- yearPath
-  colnames(pred.out) <- c("Y", "PredY", "JulDay", "Season", "Year")
-  write.table (x=pred.out,append=F,row.names=F,file=paste0("jk_pred_v_y_Mean_", basin, "_", yearPath, "_sp_fall.csv"),sep = ",", col.names=F)  
+  yr1 <- "14"
+  yr2 <- "15"
+  year1 <- "2014"
+  year2 <- "2015"
   
-  coeffs_out[1,1] <- coeffs[1,1]
-  coeffs_out[1,2] <- coeffs[2,1]
-  coeffs_out[1,3] <- coeffs[3,1]
-  coeffs_out[1,4] <- coeffs[4,1]
-  coeffs_out[1,5] <- coeffs[5,1]
+  setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year1))
+  varName <- paste0("Cppt", yr1)
   
-  metrics_out[1,1] <- sum_mod$adj.r.squared
-  metrics_out[1,2] <- sum_mod$sigma
-  metrics_out[1,3] <- p2$val[5]
-  metrics_out[1,4] <- RMSEP
-  metrics_out[1,5] <- length(unique(data.sp$SiteName))
-  metrics_out[1,6] <- length(y)
-
-
-
-  y <- data.fall$y
-  x <- data.fall$x
-  z <- data.fall$z
-  e <- data.fall$e
-  plot(z, y)  
-  plot(x, y, main="fall")
-
-  mod <- lm(y ~ x + I(x^2) + z + e)
-  sum_mod <- summary(mod)
-  sum_mod
-  pressstat_sum <- PRESS(sum_mod, verbose = "FALSE")
-  pressstat_sum$stat
-
-
-###########################################
-
-  coeffs <- as.matrix(coefficients(mod))
-  pred.y <- predict(mod)
-  pred.y[pred.y < -0.5] = -0.5
+  ##### create lists of only the grid files in 2 annual directoies
   
-  pred.new <- predict(mod, data=data.fall)
-  pred.new[pred.new < -0.5] = -0.5
+  allFiles <- list.files(pattern="*bil.bil", full.names=TRUE)
+  xmlFiles <- list.files(pattern="*bil.bil.aux.xml", full.names=TRUE)
+  fileList1 <- allFiles[!allFiles %in% xmlFiles]
+  rRaster1 <- raster(fileList1[244])
   
-  data.fall$pred <- unlist(pred.new)
+  setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year2))
+  allFiles <- list.files(pattern="*bil.bil", full.names=TRUE)
+  xmlFiles <- list.files(pattern="*bil.bil.aux.xml", full.names=TRUE)
+  fileList2 <- allFiles[!allFiles %in% xmlFiles]
   
-  plot(pred.y, y, main = "8-day Mean stream temperature (Fall Leg)", xlab="Predicted ('C)", ylab="Observed ('C)")
-  abline(0,1)
-  post_mod <- summary(lm(y ~ pred.y))
   
-  plot(mod, which = 1:5)
-  gvmodel <- gvlma(mod)
-  summary(gvmodel)
-  outlierTest(mod)
-  qqPlot(mod, main="QQ Plot Fall Leg")
-  spreadLevelPlot(mod)
-  plot(pred.y, mod$residuals, main="Model diagnostics Fall Leg", xlab="Predicted", ylab="Residuals")
+  ##### clip the rasters to a reasonable PNW extent
   
-  pressstat_sum <- PRESS(sum_mod, verbose = "FALSE")
-  RMSEP <- sqrt(mean((pressstat_sum$residuals)^2))
+  rExt <- crop(rRaster1, ext)
   
-  library(pls)
-  mod2 <- plsr(y ~ x + I(x^2) + z + e, validation = "LOO")
-  p2 <- R2(mod2)
-  detach("package:pls", unload=TRUE)
-
-  pred.out <- matrix(nrow=length(pred.y), ncol=5)
-  pred.out[,1] <- y
-  pred.out[,2] <- pred.y
-  pred.out[,3] <- z
-  pred.out[,4] <- "fall"
-  pred.out[,5] <- yearPath
-  plot(pred.out[,1], pred.out[,2])
-  write.table (x=pred.out,append=T,row.names=F,file=paste0("jk_pred_v_y_Max_", basin, "_", yearPath, "_sp_fall.csv"),sep = ",", col.names=F)  
-
-  coeffs_out[2,1] <- coeffs[1,1]
-  coeffs_out[2,2] <- coeffs[2,1]
-  coeffs_out[2,3] <- coeffs[3,1]
-  coeffs_out[2,4] <- coeffs[4,1]
-  coeffs_out[2,5] <- coeffs[5,1]
-
-  metrics_out[2,1] <- sum_mod$adj.r.squared
-  metrics_out[2,2] <- post_mod$sigma
-  metrics_out[2,3] <- p2$val[5]
-  metrics_out[2,4] <- RMSEP
-  metrics_out[2,5] <- length(unique(data.fall$SiteName))
-  metrics_out[2,6] <- length(y)
-
-write.table(x=coeffs_out, append=F,row.names=T, file = paste0("All_data_", basin, "_", yearPath, "_mod_coeffs_Mn.csv"), sep = ",", col.names=T)
-
-write.table(x=metrics_out, append=F,row.names=T, file = paste0("All_data_", basin, "_", yearPath, "_mod_metrics_Mn.csv"), sep = ",", col.names=T)
-
-  pred.y <- read.csv(paste0("jk_pred_v_y_Mean_", basin, "_", yearPath, "_sp_fall.csv"), stringsAsFactors = FALSE)
-  colnames(pred.y) <- c("Y", "PredY", "JulDay", "Season", "Year")
+  ##### convert the rasters to points and build the data structure for the loop
   
-  plot(pred.y$PredY, pred.y$Y, pch=16, col="blue", main=paste0("Mn 8-day stream temp ", basin, " ", yearPath), xlab="Predicted", ylab="Observed")
-  abline(0,1)
-  abline(lm(pred.y$Y~ pred.y$PredY), col="blue")
-  fit <- lm(pred.y$Y~ pred.y$PredY)
-  plot(fit)
-  summary(fit)
-
+  rPoints <- rasterToPoints(rExt)
+  
+  pts <- data.frame(rPoints1[,1], rPoints1[,2])
+  data.out <- data.frame(pts, extract(rRaster, pts))
+  colnames(data.out) <- c("x", "y", paste0(varName,"244"))
+  
+  ##### loop thru all the files in the lists and add them iteratively
+  
+  setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year1))
+  j <- 2
+  
+  for (i in 245:365)
+    {
+      r2 <- raster(fileList1[i])
+      extData <- extract(r2, pts)
+      sumData <- extData + data.out[,j+1]
+      data.out <- cbind(data.out, sumData)
+      namer <- sprintf('%03d', i)
+      colnames(data.out)[j+2] <- paste0(varName, namer)
+      j <- j+1
+    }
+  
+  setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year2))
+  varName <- paste0("Cppt", yr2)
+  
+  for (i in 1:243)
+    {
+      
+      r2 <- raster(fileList2[i])
+      extData <- extract(r2, pts)
+      sumData <- extData + data.out[,j+1]
+      data.out <- cbind(data.out, sumData)
+      namer <- sprintf('%03d', i)
+      colnames(data.out)[j+2] <- paste0(varName, namer)
+      j <- j+1
+    }
+  
+  data.out$PtID <- 1:89175
+  data.out[3:367,] <- round(data.out[3:367,], 2) 
+  setwd("D:/OneDrive/work/GIS/PRISM/water_year_output/")
+  write.dbf(data.out, file= paste0("SumPpt", yr1, yr2, ".dbf"))
+  data.out1415 <- data.out
+  
+  #####
+  # Subsetting and summarizing by basin
+  #####
+  
+  data.out1415_Wen <- data.out[data.out$PtID %in% basinPts$PtID,]
+  Wen_1415_mn <- colMeans(data.out1415_Wen[3:367])
+  plot(Wen_0708_mn, pch=16, col="lightgrey", cex=.7, xaxt="n", main = "Mean cumulative precip (mm) by water-year, Wen 2007-2015", xlab="Sept-Aug", ylab="Precip", ylim=c(0,1600))
+  points(Wen_0809_mn, pch=16, col="black", cex=.7)
+  points(Wen_0910_mn, pch=16, col="blue2", cex=.7)
+  points(Wen_1011_mn, pch=16, col="red", cex=.7)
+  points(Wen_1112_mn, pch=16, col="palevioletred", cex=.7)
+  points(Wen_1213_mn, pch=16, col="darkolivegreen4", cex=.7)
+  points(Wen_1314_mn, pch=16, col="darkturquoise", cex=.7)
+  points(Wen_1415_mn, pch=16, col="chartreuse2", cex=.7)
+ 
+  legend(x=grconvertX(c(1.0,1.4), from='npc'), 
+         y=grconvertY(c(0.6, 0.8), from='npc'), pch=16, bty="n", legend = c("0708","0809","0910", "1011", "1112", "1213", "1314", "1415"), col=c("lightgrey", "black", "blue2", "red", "palevioletred", "darkolivegreen4", "darkturquoise", "chartreuse2"), cex=.6, xpd=NA)
+  
 ########################################################################################################
 # This part applies the model coefficients to the LST to generate 8-day MAX temp estimates for 1 July - 30 Sept
 ########################################################################################################

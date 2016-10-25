@@ -368,280 +368,155 @@ setwd(paste0(mainPath, longBasin, "/", yearPath))
   LogPred.out <- as.data.frame(LogPred.out)
 
   LogPred.out$Basin_RCA <- paste0(basin, "_", LogPred.out$RCAID)
-  namesnum <- as.numeric(colnames(LogPred.out[1:12]))
-  varName <- paste0("Tmx_", yrPath)
+  namesnum <- as.numeric(colnames(LogPred.out[1:46]))
+  varName <- paste0("Tmn_", yrPath)
   names.out <- sprintf("%s_%03d", varName, namesnum)
-  colnames(LogPred.out)[1:12] <- names.out[1:12]
-  plot(namesnum, LogPred.out[1,1:12])
+  colnames(LogPred.out)[1:46] <- names.out[1:46]
+  plot(namesnum, LogPred.out[1,1:46])
 
-write.dbf(LogPred.out, file = paste0("predt", yearPath, "_", basin, "_8D_Max_summer.dbf")) 
+write.dbf(LogPred.out, file = paste0("predt", yearPath, "_", basin, "_8D_Mn.dbf")) 
 
 
 
-#________________________________________________________
-# summary for the summer max EPs linear fill
+##########################
+#This parts formats the error by day/site info
+###########################
 
-############################
-# 15Jul-31Aug ------------------------------------------------------------------
-#############################
-
-  setwd(paste0(mainPath, subDir, longBasin))
-
-  Au.in <- read.csv(paste0(basin, "_RCA_AUs_IP.csv"), stringsAsFactors = FALSE)
+  NoNA.xyz <- read.csv(paste0(basin, "_", yearPath, "_8Day_model_data.csv"), stringsAsFactors = TRUE)
+  NoNA.xyz <- orderBy(~z, NoNA.xyz)
+  maxrow <- which.max(NoNA.xyz$y)
+  data.sp <- NoNA.xyz[1:(maxrow-1),]
+  data.fall <- NoNA.xyz[maxrow:nrow(NoNA.xyz),]
   
+  y <- data.sp$y
+  x <- data.sp$x
+  z <- data.sp$z
+  e <- data.sp$e
+  mod <- lm(y ~ x + I(x^2) + z + e)
+  pred.new <- predict(mod, data = data.sp)
+  pred.new[pred.new < -0.5] = -0.5
+  data.sp$pred <- unlist(pred.new)
   
-  setwd(paste0(mainPath, subDir, longBasin, "/", yearPath))
-
+  y <- data.fall$y
+  x <- data.fall$x
+  z <- data.fall$z
+  e <- data.fall$e
+  mod <- lm(y ~ x + I(x^2) + z + e)
+  pred.new <- predict(mod, data=data.fall)
+  pred.new[pred.new < -0.5] = -0.5
+  data.fall$pred <- unlist(pred.new)
   
-  Max.in <- read.dbf(paste0("predt", yearPath, "_", basin, "_8D_Max_summer.dbf"))
-  colnames(Max.in)<-gsub(paste0("Tmx_", yrPath, "_"), "", colnames(Max.in))
-
-  Max.na <- matrix(ncol=49, nrow=nrow(Max.in))
-  Max.na <- as.data.frame(Max.na)  
-  colnames(Max.na)[1:49] <- 201:249
+  error.pts <- rbind(data.sp, data.fall)
+  SiteID <- unique(error.pts$SiteName)
+  SiteID <- as.matrix(SiteID)
+  Error.pts.out <- matrix(nrow = length(SiteID), ncol = 47)
   
-  colnames(Max.in)[1:12]
-  Max.na$"201" <- Max.in$"201"
-  Max.na$"209" <- Max.in$"209"
-  Max.na$"217" <- Max.in$"217"
-  Max.na$"225" <- Max.in$"225"
-  Max.na$"233" <- Max.in$"233"
-  Max.na$"241" <- Max.in$"241"
-  Max.na$"249" <- Max.in$"249"
-  tMax.na <- t(Max.na)
-  Max.filled <- na.spline(tMax.na)
-  Max.out <- t(Max.filled)
-  Max.out <- as.data.frame(Max.out)
-  Max.out$RCAID <- Max.in$RCAID
-  colnames(Max.out)[1:49] <- 201:249
+  errorName <- paste0("JulDay_", namesnum)
+  colnames(Error.pts.out)[2:47] <- errorName
+  colnames(Error.pts.out)[1] <- "SiteName"
+  
+  Error.pts.out[1:length(SiteID), 1] <- unlist(SiteID)[1:length(SiteID)]
+  Error.pts.out <- as.data.frame(Error.pts.out, stringsAsFactors = FALSE)
+  
 
-  plot(1:49, Max.out[1, 1:49],)
-  points(1:49, Max.na[1, 1:49], pch=16, col="blue")
-
-
-
-  Max.au <- merge(Max.out, Au.in, by.x = "RCAID", by.y = "RCAID")
-
-
-
-
-#_________all_______________________  
-rcas <- unique(Max.in$RCAID)
-
-SumSumm.out <- data.frame ("RCAID" = rcas)
-
-
-# count of days in exceedence -----------------------------------------
-
-
-  for (i in 1:length(rcas)) 
+  for (i in SiteID) 
     { 
-      l <- rcas[i]
-      MaxRCA <- Max.out[Max.out$RCAID == l,] #grab days for one RCA 
-      DaysAbove12 <- length(which(MaxRCA[1,2:44]> 12)) #finds how many day in the 20July-31Aug window exceed threshold 
-      DaysAbove13 <- length(which(MaxRCA[1,2:44]> 13))
-      DaysAbove16 <- length(which(MaxRCA[1,2:44]> 16))
-      DaysAbove18 <- length(which(MaxRCA[1,2:44]> 18))
-      DaysAbove20 <- length(which(MaxRCA[1,2:44]> 20))
-      DaysAbove22 <- length(which(MaxRCA[1,2:44]> 22))
-      MaxMax <- max(MaxRCA[1,2:44])
-      SDMax <- sd(MaxRCA[1,2:44])
-      MeanMax <- mean(unlist(MaxRCA[2:44]))
-      SumSumm.out$PctDays12[i] <- DaysAbove12/43
-      SumSumm.out$PctDays13[i] <- DaysAbove13/43
-      SumSumm.out$PctDays16[i] <- DaysAbove16/43
-      SumSumm.out$PctDays18[i] <- DaysAbove18/43
-      SumSumm.out$PctDays20[i] <- DaysAbove20/43
-      SumSumm.out$PctDays22[i] <- DaysAbove22/43
-      SumSumm.out$MxMx[i] <- MaxMax 
-      SumSumm.out$SdMn[i] <- SDMax
-      SumSumm.out$MnMx[i] <- MeanMax
-    } 
-
-
-  SumSumm.out[,2:7] <- round(SumSumm.out[,2:7], digits = 2)
-  
-  colnames(SumSumm.out) <- c("RCAID", paste0("Pct12_", yearPath),paste0("Pct13_", yearPath), paste0("Pct16_", yearPath), paste0("Pct18_", yearPath), paste0("Pct20_", yearPath), paste0("Pct22_", yearPath),  paste0("MxMx_", yearPath), paste0("sdMn_", yearPath), paste0("MnMx_", yearPath))
-
-setwd(paste0(mainPath, subDir, longBasin, "/", yearPath))
-
-write.dbf(SumSumm.out, file = paste0(basin,"_", yearPath, "_21Jul_31Aug_max_summary_All.dbf"))
-write.csv(SumSumm.out, file = paste0(basin,"_", yearPath, "_21Jul_31Aug_max_summary_All.csv"), row.names = F)
-
-
-#________________________________
-# summmary of IP reaches only by AU
-#______________________________________
-
-
-SumSummAU <- merge(SumSumm.out, Au.in, by.x = "RCAID", by.y = "RCAID")
-colnames(SumSummAU)[1:10] <- c("RCAID", "PctDays12","PctDays13", "PctDays16", "PctDays18", "PctDays20", "PctDays22",  "MxMx", "sdMn", "MnMx")
-
-
-######
-#________steelhead____________________  
-######
-
-  popn <- "STHD"
-  varName <- paste0(basin, "_", popn)
-  ST_rcas <- unique(na.omit(Au.in[Au.in$STHD_IP == "Steelhead", "RCAID"]))
-  
-  Au.in[Au.in==" "] <- NA
-  Aus <- unique(na.omit(Au.in$AU_STHD))
-
-  v12DMn = NULL
-  v13DMn = NULL
-  v16DMn = NULL
-  v18DMn = NULL
-  v20DMn = NULL 
-  v22DMn = NULL
-  MnMxDMn = NULL
-  SeMxDMn = NULL
-  AU_Code = NULL
-
-  for (i in 1:length(Aus)) 
-    { 
-      SumAU <- SumSummAU[SumSummAU$AU_STHD == Aus[i] & SumSummAU$STHD_IP == "Steelhead",]
-      v12Mn = mean(unlist(SumAU$PctDays12))
-      v13Mn = mean(unlist(SumAU$PctDays13))
-      v16Mn = mean(unlist(SumAU$PctDays16))
-      v18Mn = mean(unlist(SumAU$PctDays18))
-      v20Mn = mean(unlist(SumAU$PctDays20))
-      v22Mn = mean(unlist(SumAU$PctDays22))
-      MnMax = mean(unlist(SumAU$MnMx))
-      SeMax = MnMax/sqrt(length(SumAU$MnMx))
+      error.site <- error.pts[error.pts$SiteName  == i,]
+      error.site$error <- error.site[,'y']-error.site[,'pred']
       
-      v12DMn = append(v12DMn, v12Mn)
-      v13DMn = append(v13DMn, v13Mn)
-      v16DMn = append(v16DMn, v16Mn)
-      v18DMn = append(v18DMn, v18Mn)
-      v20DMn = append(v20DMn, v20Mn)
-      v22DMn = append(v22DMn, v22Mn)
-      MnMxDMn = append(MnMxDMn, MnMax)
-      SeMxDMn = append(SeMxDMn, SeMax)
-      AU_Code = append(AU_Code, Aus[i])
-    } 
-
-  SumAU.out = data.frame(v12DMn, v13DMn, v16DMn, v18DMn, v20DMn, v22DMn, MnMxDMn, SeMxDMn, AU_Code)
-  SumAU.out[,1:8] <- round(SumAU.out[,1:8], digits = 2)
-
-colnames(SumAU.out) <- c("v12DMax", "v13DMax", "v16DMax", "v18DMax", "v20DMax", "v22DMax", "MnMax", "SeMnMx", "AU_Code")
-write.csv(SumAU.out, file = paste0(basin, "_AU_", yearPath, "_21Jul_31Aug_ExPcnt_summary_", popn, ".csv"), row.names = F)
-
-
-######
-#________Chinook____________________  
-######
-
-  popn <- "CHNK"
-  varName <- paste0(basin, "_", popn)
-  CH_rcas <- unique(na.omit(Au.in[Au.in$CHNK_IP == "Chinook", "RCAID"]))
-
-  Aus <- unique(Max.au$AU_CHIN)
-  Aus <- Aus[-1]
-  
-  
-
-  v12DMn = NULL
-  v13DMn = NULL
-  v16DMn = NULL
-  v18DMn = NULL
-  v20DMn = NULL 
-  v22DMn = NULL
-  MnMxDMn = NULL
-  SeMxDMn = NULL
-  AU_Code = NULL
-  
-    for (i in 1:length(Aus)) 
-      { 
-        SumAU <- SumSummAU[SumSummAU$AU_CHIN == Aus[i] & SumSummAU$CHNK_IP == "Chinook",]
-        v12Mn = mean(unlist(SumAU$PctDays12))
-        v13Mn = mean(unlist(SumAU$PctDays13))
-        v16Mn = mean(unlist(SumAU$PctDays16))
-        v18Mn = mean(unlist(SumAU$PctDays18))
-        v20Mn = mean(unlist(SumAU$PctDays20))
-        v22Mn = mean(unlist(SumAU$PctDays22))
-        MnMax = mean(unlist(SumAU$MnMx))
-        SeMax = MnMax/sqrt(length(SumAU$MnMx))
-        
-        v12DMn = append(v12DMn, v12Mn)
-        v13DMn = append(v13DMn, v13Mn)
-        v16DMn = append(v16DMn, v16Mn)
-        v18DMn = append(v18DMn, v18Mn)
-        v20DMn = append(v20DMn, v20Mn)
-        v22DMn = append(v22DMn, v22Mn)
-        MnMxDMn = append(MnMxDMn, MnMax)
-        SeMxDMn = append(SeMxDMn, SeMax)
-        AU_Code = append(AU_Code, Aus[i])
-      } 
-  
-  SumAU.out = data.frame(v12DMn, v13DMn, v16DMn, v18DMn, v20DMn, v22DMn, MnMxDMn, SeMxDMn, AU_Code)
-  SumAU.out[,1:8] <- round(SumAU.out[,1:8], digits = 2)
-  
-  colnames(SumAU.out) <- c("v12DMax", "v13DMax", "v16DMax", "v18DMax", "v20DMax", "v22DMax", "MnMax", "SeMnMx", "AU_Code")
-  write.csv(SumAU.out, file = paste0(basin, "_AU_", yearPath, "_21Jul_31Aug_ExPcnt_summary_", popn, ".csv"), row.names = F)
-
-
-#######
-#_________________pie charts_____________
-#######
-`
-
-library(plotrix)
-
-basin <- "Aso"
-longBasin <- "Asotin"
-yrPath <- "12"
-yearPath <- "2012"
-subDir <- "EP_temp/"
-dataPath <- "D:/OneDrive/work/research/CHaMP/GIS/coverages/"
-mainPath <- "D:/OneDrive/work/research/CHaMP/CHaMP_data/"
-setwd(paste0(mainPath, subDir, longBasin, "/", yearPath))
-graphPath <- "D:/OneDrive/work/research/CHaMP/graphics/EP/"
-
-popn <- "CHNK"
-
-
-  SumAU.out <- read.csv(paste0(basin, "_AU_", yearPath, "_21Jul_31Aug_ExPcnt_summary_", popn, ".csv"), stringsAsFactors = FALSE)
-  
-  Aus <- SumAU.out$AU_Code
-  metrics <- c("18", "20", "22")
-
-  for (l in metrics)
-    {
       
-      varName <- paste0("v", l, "DMax")
+      error <- matrix(ncol=1, nrow=46)
+      error[,1] <- namesnum
+      error <- data.frame(error)
+      colnames(error) <- c("JulDay")
       
-      for (i in 1:length(Aus)) 
-        { 
-          ExVal <- SumAU.out[SumAU.out$AU_Code == Aus[i], varName]*100
-          value <- c(ExVal, 100-ExVal)
-          name <- as.character(Aus[i])
-          
-          filename <- paste0(graphPath, longBasin, "/", yearPath, "/PctD", l, "/", name, "_", l, popn, ".png", sep="")
-          png(filename=filename)
-          
-          
-          if(ExVal >= 10)
-          {
-            cols <- c("red2", "gainsboro")
-            pie(value, col=cols, cex.main=3.0, main=name)
-            bisect.angles <- floating.pie(0,0,value, col=cols,)
-            pie.labels(0,0,bisect.angles,radius=0.4, c(paste0(value[1],"%")), cex=3, font=2, main=name)
-            
-          } else if (ExVal < 10 & ExVal > 0){
-            cols <- c("red2", "gainsboro")
-            pie(value, col=cols, cex.main=3.0, main=name)
-            bisect.angles <- floating.pie(0,0,value, col=cols,)
-            pie.labels(0,0,bisect.angles,radius=1.05, c(paste0(value[1],"%")), cex=3, font=2, main=name)
-          } else {
-            cols <- c("red2", "gainsboro")
-            pie(value, clockwise = TRUE, col=cols, cex.main=3.0, main=name)
-            bisect.angles <- floating.pie(0,0,value, col=c("gainsboro"), )
-            pie.labels(0,0,bisect.angles,radius=1.05, c(paste0(value[1],"%")), cex=3, font=2, main=name)
-          }
-          
-          dev.off()
-        }
+      error.site.fill <- merge(error, error.site, by.x = "JulDay", by.y = "z", all.x=TRUE, all.y = FALSE)
+      Error.pts.out[Error.pts.out$SiteName==i,2:47] <- as.numeric(unlist(error.site.fill$error))
     }
 
+  Error.pts.out[,2:47] <- sapply(Error.pts.out[,2:47], as.numeric)
+  
+  Error.pts.out[,2:47] <- round(Error.pts.out[,2:47], digits=3)
+
+write.dbf(Error.pts.out, file = paste0("Error", yearPath, "_", basin, "_8D_Mn.dbf")) 
+write.csv(Error.pts.out, file = paste0("Error", yearPath, "_", basin, "_8D_Mn.csv"))
+#####Join this output to the point coverage
+###############################################
+#
+# Edited 5 may 2016 to add animation output
+# Edited 25 May 2016 to add HUC display
+################################################
+
+library(rgdal)
+library(RColorBrewer)
+library(classInt)
+
+
+  modelPath <- paste0("D:/OneDrive/work/research/CHaMP/CHaMP_data/", yearPath, "_temp_CHaMP/")
+  
+  netname <- paste0(basin, "_", yearPath, "_8D_mn")
+  ptsname <- paste0(basin, "_", yearPath, "_8D_mn_error")
+
+setwd(modelPath)
+
+  error_pts <- readOGR(dsn=".", layer = ptsname)
+  
+  network <- readOGR(dsn=".", layer = netname)
+  error_pts@data[error_pts@data == 0] <- NA
+  error_pts@data <- error_pts@data[,3]
+  
+  seis = c("#AA0000", "#D00000", "#F70000", "#FF1D00", "#FF4400", "#FF6A00", "#FF9000", "#FFB700", "#FFDD00", "#FFE200", "#BDFF0C", "#73FF1A", "#3FFA36", "#16F45A", "#00D08B", "#0087CD", "#0048FA", "#0024E3")
+  seis <- rev(seis)
+  
+  names.out <- colnames(network@data[3:48])
+  namesnum <- as.numeric(gsub("Tmn_14_", "", colnames(network@data[3:48])))
+  means <- colMeans(network@data[3:48])
+  SDs <- colStdevs(network@data[3:48])
+  yplus <- means + SDs
+  yminus <- means - SDs
+  df <- data.frame(means=means, SDs=SDs, names=namesnum)
+  sequ <- c(1:46)
+  namer <- sprintf('%03d', sequ)
+  
+  for (i in 3:48)
+    {
+      
+      namey <- gsub("Tmn_14_", "", colnames(network@data)[i])
+      
+      filename <- paste0(mainPath, longBasin, "/", yearPath, "/graphics/", namer[i-2], ".png", sep="")
+      png(filename=filename, res = 300, width = 1500, height = 1500, units = "px", bg="black")
+      
+      fix3 <- classIntervals(network@data[,i], n = 11, style = "fixed",fixedBreaks=c(-1,2,4,6,8,10,12,14,16,18,22))
+      fix3.colors <- findColours(fix3,pal=seis)
+      
+      cexEr <- ifelse(abs(error_pts@data[,i]) <= 1, 0.5,
+                      ifelse(abs(error_pts@data[,i])>1, 0.75,
+                             ifelse(abs(error_pts@data[,i])>2, 1.0,
+                                    ifelse(abs(error_pts@data[,i])>3, 1.25, NA))))
+      
+      plot(network, col=fix3.colors, bg="black", fg="white")
+      points(error_pts, pch=16, col="gray40", cex=cexEr)
+      
+      legend("topright", fill = attr(fix3.colors, "palette"), legend = c("0-2","2-4","4-6","6-8","8-10","10-12","12-14","14-16","16-18","18+"), bty = "n", cex=.5, inset=c(0,0), text.col="white");
+      legend("bottomright", pch=16, col="gray40", pt.cex=c(0.5, 0.75, 1.0, 1.25), legend = c("+/- 0-1","+/- 1-2","+/- 2-3","+/- 3+"), bty = "n", cex=.5, inset=c(0,0), text.col="white");
+      
+      mtext("Asotin 8-day mean ('C)",side =3, outer=TRUE, line=-3, col="white", cex=.7)
+      mtext(paste0("Julian Day ", namey),side =1, outer=TRUE, line=-3, col="white", cex=.7)
+      
+      tmp2 <- subplot(
+        plot(namesnum[1:(i-2)], means[1:(i-2)], col=fix4.colors, pch=16, bty="n", xlim=c(0,360), ylim=c(0,18), cex.main=.8, main="Basin mean", adj=0, xlab='',ylab='', col.lab="white", cex.axis=0.5, cex.lab = 0.25, col.axis="white", col.main = "white", bg="black"), 
+        x=grconvertX(c(0.0,0.25), from='npc'), 
+        y=grconvertY(c(0.80,0.95), from='npc'),
+        size=c(1,1.5), vadj=0.5, hadj=0.5, 
+        pars=list( mar=c(0,0,0,0)+0.1, cex=0.5))
+      
+      
+      dev.off()
+    }
+    
+
+setwd(paste0(mainPath, longBasin, "/", yearPath, "/graphics/"))
+
+system('"C:/Program Files/ImageMagick-7.0.1-Q16/convert.exe" -delay 20 -morph 3 *.png example.mpeg')
+
+############

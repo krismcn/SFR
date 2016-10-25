@@ -36,15 +36,15 @@ library(rNOMADS)
 library(gdalUtils)
 
 
-  basin <- "Wen"
-  midBasin <- "Wenatchee"
-  longBasin <- "Wenatchee"
+  basin <- "JD"
+  midBasin <- "JohnDay"
+  longBasin <- "JohnDay"
   dataType <- "Temp"
   yrPath <- "00"
   monthPath <- "01"
   yearPath <- "2000"
-  dataPath <- "D:/OneDrive/work/GIS/NARR/"
-  mainPath <- "D:/OneDrive/work/research/CHaMP/CHaMP_data/"
+  dataPath <- "D:/OneDrive/work/GIS/PRISM/"
+  mainPath <- "D:/OneDrive/work/research/CHaMP/CHaMP_data/Climate_analysis/"
     
            
 #################################################################
@@ -52,25 +52,154 @@ library(gdalUtils)
 
 # ################################################################
   
- 
+  
+  setwd(paste0(dataPath, "Tables"))
+    
+  
+  TempMn.out <- NULL
+  TempMd.out <- NULL
+  Yr.out <- NULL
+  PrecipMn.out <- NULL
+  PrecipMd.out <- NULL
+  
+  yrPath <- "09"
+  
+  
+    Temp <- data.frame(mup=NULL)
+    for (i in 0:11)
+      {
+        Temp.in <- read.dbf(paste0(basin, "_Temp_", yrPath, "_", i, ".dbf"))
+      Temp <- rbind(Temp, Temp.in)
+      }
+    
+    Temp$Year <- yrPath
+    Temp09 <- Temp
+    TempMn <- mean(unlist(Temp$Mean)) - 273.15
+    TempMd <- median(unlist(Temp$Mean)) - 273.15
+    TempMn.out <- append(TempMn.out, TempMn)
+    TempMd.out <- append(TempMd.out, TempMd)
+    Yr.out <- append(Yr.out, yrPath)
+    
+    Precip <- data.frame(mup=NULL)
+    for (i in 0:11)
+    {
+      Precip.in <- read.dbf(paste0(basin, "_Precip_", yrPath, "_", i, ".dbf"))
+      Precip <- rbind(Precip, Precip.in)
+    }
+    
+    Precip$Year <- yrPath
+    Precip09 <- Precip 
+    PrecipMn <- mean(unlist(Precip$Mean))
+    PrecipMd <- median(unlist(Precip$Mean))
+    PrecipMn.out <- append(PrecipMn.out, PrecipMn)
+    PrecipMd.out <- append(PrecipMd.out, PrecipMd)
+    
+
+##############
+# some plots to look at 
+# ##############
+    
+  plot(1:12, Temp00$Mean, main = "Mean Monthly Surface Air Temperature, Wenatchee, 2000-2009", xlab="Month", ylab="Degrees C", ylim=c(265, 295))
+  points(1:12, Temp01$Mean, pch=16, col="blue")
+  points(1:12, Temp02$Mean, pch=16, col="red")
+  points(1:12, Temp03$Mean, pch=16, col="lightblue")
+  points(1:12, Temp04$Mean, pch=16, col="orange")
+  points(1:12, Temp05$Mean, pch=16, col="pink")
+  points(1:12, Temp06$Mean, pch=16, col="purple")
+  points(1:12, Temp07$Mean, pch=16, col="palevioletred")
+  points(1:12, Temp08$Mean, pch=16, col="grey50")
+  points(1:12, Temp09$Mean, pch=16, col="green")
+  lines(1:12, Temp00$Mean, col="black")
+  lines(1:12, Temp01$Mean, col="blue")
+  lines(1:12, Temp02$Mean, col="red")
+  lines(1:12, Temp03$Mean, col="lightblue")
+  lines(1:12, Temp04$Mean, col="orange")
+  lines(1:12, Temp05$Mean, col="pink")
+  lines(1:12, Temp06$Mean, col="purple")
+  lines(1:12, Temp07$Mean, col="palevioletred")
+  lines(1:12, Temp08$Mean, col="grey50")
+  lines(1:12, Temp09$Mean, col="green")
+  legend("topright", pch=16, title="(K)", legend = c("00","01","02","03","04","05","06","07","08","09"), col=c("black", "blue", "red", "lightblue", "orange", "pink", "purple", "palevioletred", "grey50", "green"), cex=.6)
+  
+  plot(1:12, Precip00$Mean, main = "Mean Monthly Total Precip, Wenatchee, 2000-2009", xlab="Month", ylab="kgm^2", ylim=c(0, 1.9))
+  points(1:12, Precip01$Mean, pch=16, col="blue")
+  points(1:12, Precip02$Mean, pch=16, col="red")
+  points(1:12, Precip03$Mean, pch=16, col="lightblue")
+  points(1:12, Precip04$Mean, pch=16, col="orange")
+  points(1:12, Precip05$Mean, pch=16, col="pink")
+  points(1:12, Precip06$Mean, pch=16, col="purple")
+  points(1:12, Precip07$Mean, pch=21, col="palevioletred")
+  points(1:12, Precip08$Mean, pch=16, col="grey50")
+  points(1:12, Precip09$Mean, pch=16, col="green")
+  lines(1:12, Precip00$Mean, col="black")
+  lines(1:12, Precip01$Mean, col="blue")
+  lines(1:12, Precip02$Mean, col="red")
+  lines(1:12, Precip03$Mean, col="lightblue")
+  lines(1:12, Precip04$Mean, col="orange")
+  lines(1:12, Precip05$Mean, col="pink")
+  lines(1:12, Precip06$Mean, col="purple")
+  lines(1:12, Precip07$Mean, col="palevioletred")
+  lines(1:12, Precip08$Mean, col="grey50")
+  lines(1:12, Precip09$Mean, col="green")
+  legend(x=grconvertX(c(1.0,1.4), from='npc'), 
+        y=grconvertY(c(0.6, 0.8), from='npc'), pch=16, title="kg/m^2", bty="n", legend = c("00","01","02","03","04","05","06","07","08","09"), col=c("black", "blue", "red", "lightblue", "orange", "pink", "purple", "palevioletred", "grey50", "green"), cex=.6, xpd=NA)
+  
+  mod <- lm(Precip$Mean~Temp$MEAN)
+  plot(Temp00$MEAN, Precip$Mean, pch=16, main = "Precipitation by Temperature, Wenatchee, 2000", xlab="Temp", ylab="Precip")
+  abline(mod)
+  
+  plot(Temp00$Mean, Precip00$Mean, main = "Mean Monthly Total Precip by Temp, Wenatchee, 2000-2009", xlab="Month", ylab="kgm^2", ylim=c(0, 1.9), xlim=c(265, 295))
+  points(Temp01$Mean, Precip01$Mean, pch=16, col="blue")
+  points(Temp02$Mean, Precip02$Mean, pch=16, col="red")
+  points(Temp03$Mean, Precip03$Mean, pch=16, col="lightblue")
+  points(Temp04$Mean, Precip04$Mean, pch=16, col="orange")
+  points(Temp05$Mean, Precip05$Mean, pch=16, col="pink")
+  points(Temp06$Mean, Precip06$Mean, pch=16, col="purple")
+  points(Temp07$Mean, Precip07$Mean, pch=21, col="palevioletred")
+  points(Temp08$Mean, Precip08$Mean, pch=16, col="grey50")
+  points(Temp09$Mean, Precip09$Mean, pch=16, col="green")
+  abline(lm(Precip00$Mean ~ Temp00$Mean), col="black")
+  abline(lm(Precip01$Mean ~ Temp01$Mean), col="blue")
+  abline(lm(Precip02$Mean ~ Temp02$Mean), col="red")
+  abline(lm(Precip03$Mean ~ Temp03$Mean), col="lightblue")
+  abline(lm(Precip04$Mean ~ Temp04$Mean), col="orange")
+  abline(lm(Precip05$Mean ~ Temp05$Mean), col="pink")
+  abline(lm(Precip06$Mean ~ Temp06$Mean), col="purple")
+  abline(lm(Precip07$Mean ~ Temp07$Mean), col="palevioletred")
+  abline(lm(Precip08$Mean ~ Temp08$Mean), col="grey50")
+  abline(lm(Precip09$Mean ~ Temp09$Mean), col="green")
+  legend(x=grconvertX(c(1.0,1.4), from='npc'), 
+         y=grconvertY(c(0.6, 0.8), from='npc'), pch=16, bty="n", legend = c("00","01","02","03","04","05","06","07","08","09"), col=c("black", "blue", "red", "lightblue", "orange", "pink", "purple", "palevioletred", "grey50", "green"), cex=.6, xpd=NA)
+  
+  AllTemp <- rbind(Temp00, Temp01, Temp02, Temp03, Temp04, Temp05, Temp06, Temp07, Temp08, Temp09)
+  plot(AllTemp$Mean)
+  lines(1:120, AllTemp$Mean)
+  allPrecip <- rbind(Precip00, Precip01, Precip02, Precip03, Precip04, Precip05, Precip06, Precip07, Precip08, Precip09)
+  plot(allPrecip$Mean)
+  lines(1:120, allPrecip$Mean)
+  
+  sumPrecip <- NULL
+  sumP <- colSums(Precip00$Mean)
+  sumPrecip <- append(sumPrecip, sum(Precip09$Mean))
+  plot(TempMn.out, sumPrecip, main="Sum precip by Mean temp")
+  
 # ###############################
 # PRISM raster processing
 # ##################################
 
+  #test <- apply(data.out[3:367], 1, cumsum)
   
-  
-  basinPts <- read.dbf("D:/OneDrive/work/GIS/PRISM/Wen_prism_pts.dbf")
-  pts <- data.frame(rPoints[,1], rPoints[,2])
+  basinPts <- read.dbf(paste0(mainPath, basin, "_PRISM_pts.dbf"))
+  pts <- data.frame(basinPts[,1], basinPts[,2])
 ##################
   # precip
 # #################
   
-
   
-  for (j in 1981:2015)
+  for (j in 1998:2015)
     {  
         year <- j
-        yr <- substr(j,3,4)
+        yr <- j
         setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year))
         varName <- paste0("Cppt", yr)
         ##### create a list of only the grid files in a directory
@@ -81,18 +210,19 @@ library(gdalUtils)
         
         ###### read in one grid to get the structure
         
+        #r <- readGDAL(fileList[1])
         rRaster <- raster(fileList[1])
         
         ##### clip the raster to a reasonable PNW extent
         
-        ext <- extent(-125, -107, 40, 50)
-        rExt <- crop(rRaster, ext)
-      
+        # ext <- extent(-125, -107, 40, 50)
+        # rExt <- crop(rRaster, ext)
+        # 
         ##### convert the raster to points and build the data structure for the loop
         
-        rPoints <- rasterToPoints(rExt)
-        
-        pts <- data.frame(rPoints[,1], rPoints[,2])
+        # rPoints <- rasterToPoints(rExt)
+        # 
+       
         data.out <- data.frame(pts, extract(rRaster, pts))
         colnames(data.out) <- c("x", "y", paste0(varName,"001"))
         #rPoints1 <- SpatialPoints(coordinates(rPoints), proj4string = CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"))
@@ -110,15 +240,35 @@ library(gdalUtils)
           colnames(data.out)[i+2] <- paste0(varName, namer)
           }
         
-        data.out$PtID <- 1:89175
+        data.out$PtID <- basinPts$PtID
         write.dbf(data.out, file= paste0("SumPpt", year, ".dbf"))
         
         
+        assign(paste0("Ppt_", basin, "_", year), colMeans(data.out))
+        
     }
 
+  list <- mget(paste0("Ppt_", basin, "_", 1981:2010))
+  all <- do.call(rbind, list)
   
+    
+  ############# that one time I needed to reread everything ##########
   
-
+  for (j in 2000:2015)
+    {
+      year <- j
+      setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year))
+      test.in <- read.dbf(paste0("SumPpt", year, ".dbf"))
+      data.out_JD <- test.in[test.in$PtID %in% basinPts$PtID,]
+      assign(paste0("Ppt_JD_", year), colMeans(data.out_JD))
+    }
+  #################### This part just creates a list of all the vector names and row binds them ##############
+  
+  list <- mget(paste0("Ppt_JD_", 2000:2015))
+  all <- do.call(rbind, list)
+  
+  y01_15_ppt <- all[2:16, 367]
+  write.csv(y01_15_ppt, file=paste0(basin, "_01_15_mn_sum_precip.csv"))
 ######################
 # if going back later to process
 # #####################
@@ -126,169 +276,168 @@ library(gdalUtils)
   for (j in 1981:2015)
     {
       year <- j
-      yr <- substr(j,3,4)
-      setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year))
-      data.in <- read.dbf(paste0("SumPpt", year, ".dbf"))
+      setwd(paste0("D:/OneDrive/work/GIS/PRISM/Temp/", year))
+      data.in <- read.dbf(paste0("SumTmp", year, ".dbf"))
       data.out <- data.in[data.in$PtID %in% basinPts$PtID,]
-      assign(paste0("Ppt_Wen_", year), colMeans(data.out)) 
+      write.dbf(data.out, file= paste0("SumTmpJD", year, ".dbf"))
     }
     
   
-  list <- mget(paste0("Ppt_Wen_", 1981:2010))
-  all <- do.call(rbind, list)
   
   y30_Ppt_mn <- colMeans(all[,3:367])
   
   
-########################
-# mean first, then accumulate
-# #######################
-# ##### 
-#   pts <- data.frame(basinPts[,1], basinPts[,2])
-#   rPoints1 <- SpatialPoints(coordinates(pts), proj4string = CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"))
-#   
-#   
-#   data.out <- data.frame(pts, extract(rRaster, pts))
-#   rRaster <- raster(fileList[1])
-#   rStack <- extract(r2, rPoints1)
-#   
-#   for (i in 2:365)
-#   {
-#     
-#     r2 <- raster(fileList[i])
-#     extData <- extract(r2, pts)
-#     rStack <- cbind(rStack, extData)
-#   }
-#   
-#   basinMn <- colMeans(rStack)
-#   basinPts <- read.dbf("D:/OneDrive/work/GIS/PRISM/Wen_prism_pts.dbf")
-#   
-#   data.out15_Wen_ppt <- data.out[data.out$PtID %in% basinPts$PtID,]
-#     
 # #####
 # # Subsetting and summarizing by basin ppt
 # #####
 #   
-#   basinPts <- read.dbf("D:/OneDrive/work/GIS/PRISM/Wen_prism_pts.dbf")
-#   
-#   data.out15_Wen_ppt <- data.out[data.out$PtID %in% basinPts$PtID,]
-#   Wen_15_mn_ppt <- colMeans(data.out15_Wen_ppt)
-# ####   
-  plot(Ppt_Wen_2000[3:367], pch=16, col="cornflowerblue", cex=.7, main = "Mean cumulative precip, Wenatchee basin, 2000-2015", xlab="Julian Day", ylab="Precip", ylim=c(0,1600))
-  points(Ppt_Wen_2001[3:367], pch=16, col="cyan4", cex=.7)
-  points(Ppt_Wen_2002[3:367], pch=16, col="khaki", cex=.7)
-  points(Ppt_Wen_2003[3:367], pch=16, col="deeppink4", cex=.7)
-  points(Ppt_Wen_2004[3:367], pch=16, col="deeppink", cex=.7)
-  points(Ppt_Wen_2009[3:367], pch=16, col="darkgrey", cex=.7)
-  points(Ppt_Wen_2008[3:367], pch=16, col="lightblue", cex=.7)
-  points(Ppt_Wen_2007[3:367], pch=16, col="red", cex=.7)
-  points(Ppt_Wen_2011[3:367], pch=16, col="palevioletred", cex=.7)
-  points(Ppt_Wen_2006[3:367], pch=16, col="darkgoldenrod1", cex=.7)
-  points(Ppt_Wen_2005[3:367], pch=16, col="blueviolet", cex=.7)
-  points(Ppt_Wen_2010[3:367], pch=16, col="lightgrey", cex=.7)
-  points(Ppt_Wen_2012[3:367], pch=16, col="darkolivegreen4", cex=.7)
-  points(Ppt_Wen_2013[3:367], pch=16, col="darkturquoise", cex=.7)
-  points(Ppt_Wen_2014[3:367], pch=16, col="chartreuse2", cex=.7)
-  points(Ppt_Wen_2015[3:367], pch=15, col="blue2", cex=.7)
+  y30_precip <- c(mean(Ppt_JD_1981), mean(Ppt_JD_1982), mean(Ppt_JD_1983), mean(Ppt_JD_1984), mean(Ppt_JD_1985), mean(Ppt_JD_1986), mean(Ppt_JD_1987), mean(Ppt_JD_1988), mean(Ppt_JD_1989), mean(Ppt_JD_1990), mean(Ppt_JD_1991), mean(Ppt_JD_1992), mean(Ppt_JD_1993), mean(Ppt_JD_1994), mean(Ppt_JD_1995), mean(Ppt_JD_1996), mean(Ppt_JD_1997), mean(Ppt_JD_1998), mean(Ppt_JD_1999), mean(Ppt_JD_2000), mean(Ppt_JD_2001), mean(Ppt_JD_2002), mean(Ppt_JD_2003), mean(Ppt_JD_2004), mean(Ppt_JD_2005), mean(Ppt_JD_2006), mean(Ppt_JD_2007), mean(Ppt_JD_2008), mean(Ppt_JD_2009), mean(Ppt_JD_2010), mean(Ppt_JD_2011), mean(Ppt_JD_2012), mean(Ppt_JD_2013), mean(Ppt_JD_2014), mean(Ppt_JD_2015))
+  
+  
+  y01_15_precip <- c(mean(Ppt_JD_2001), mean(Ppt_JD_2002), mean(Ppt_JD_2003), mean(Ppt_JD_2004), mean(Ppt_JD_2005), mean(Ppt_JD_2006), mean(Ppt_JD_2007), mean(Ppt_JD_2008), mean(Ppt_JD_2009), mean(Ppt_JD_2010), mean(Ppt_JD_2011), mean(Ppt_JD_2012), mean(Ppt_JD_2013), mean(Ppt_JD_2014), mean(Ppt_JD_2015))
+  
+  list <- mget(paste0("Ppt_", basin, "_", 1981:2010))
+  all <- do.call(rbind, list)
+  y30_Ppt_mn <- colMeans(all[,3:367])
+  
+  
+  plot(Ppt_JD_2000[3:367], pch=16, col="cornflowerblue", cex=.7, main = "Mean cumulative precip, John Day basin, 2000-2015", xlab="Julian Day", ylab="Precip", ylim=c(0,600))
+  points(Ppt_JD_2001[3:367], pch=16, col="cyan4", cex=.7)
+  points(Ppt_JD_2002[3:367], pch=16, col="khaki", cex=.7)
+  points(Ppt_JD_2003[3:367], pch=16, col="deeppink4", cex=.7)
+  points(Ppt_JD_2004[3:367], pch=16, col="deeppink", cex=.7)
+  points(Ppt_JD_2009[3:367], pch=16, col="darkgrey", cex=.7)
+  points(Ppt_JD_2008[3:367], pch=16, col="lightblue", cex=.7)
+  points(Ppt_JD_2007[3:367], pch=16, col="red", cex=.7)
+  points(Ppt_JD_2011[3:367], pch=16, col="palevioletred", cex=.7)
+  points(Ppt_JD_2006[3:367], pch=16, col="darkgoldenrod1", cex=.7)
+  points(Ppt_JD_2005[3:367], pch=16, col="blueviolet", cex=.7)
+  points(Ppt_JD_2010[3:367], pch=16, col="lightgrey", cex=.7)
+  points(Ppt_JD_2012[3:367], pch=16, col="darkolivegreen4", cex=.7)
+  points(Ppt_JD_2013[3:367], pch=16, col="darkturquoise", cex=.7)
+  points(Ppt_JD_2014[3:367], pch=16, col="chartreuse2", cex=.7)
+  points(Ppt_JD_2015[3:367], pch=15, col="blue2", cex=.7)
 
   points(y30_Ppt_mn[1:365], pch=16, col="black", cex=.8)
   
    legend(x=grconvertX(c(1.0,1.4), from='npc'),
          y=grconvertY(c(0.6, 0.8), from='npc'), pch=16, bty="n", legend = c("00", "01", "02", "03", "04", "05", "06", "07","08","09", "10", "11", "12", "13", "14", "15"), col=c("cornflowerblue", "cyan4", "khaki", "deeppink4", "deeppink", "blueviolet", "darkgoldenrod1", "red", "lightblue", "black", "lightgrey", "palevioletred", "darkolivegreen4", "darkturquoise", "chartreuse2", "blue2"), cex=.65, xpd=NA)
 
-   y30_precip <- c(mean(Ppt_Wen_1981), mean(Ppt_Wen_1982), mean(Ppt_Wen_1983), mean(Ppt_Wen_1984), mean(Ppt_Wen_1985), mean(Ppt_Wen_1986), mean(Ppt_Wen_1987), mean(Ppt_Wen_1988), mean(Ppt_Wen_1989), mean(Ppt_Wen_1990), mean(Ppt_Wen_1991), mean(Ppt_Wen_1992), mean(Ppt_Wen_1993), mean(Ppt_Wen_1994), mean(Ppt_Wen_1995), mean(Ppt_Wen_1996), mean(Ppt_Wen_1997), mean(Ppt_Wen_1998), mean(Ppt_Wen_1999), mean(Ppt_Wen_2000), mean(Ppt_Wen_2001), mean(Ppt_Wen_2002), mean(Ppt_Wen_2003), mean(Ppt_Wen_2004), mean(Ppt_Wen_2005), mean(Ppt_Wen_2006), mean(Ppt_Wen_2007), mean(Ppt_Wen_2008), mean(Ppt_Wen_2009), mean(Ppt_Wen_2010), mean(Ppt_Wen_2011), mean(Ppt_Wen_2012), mean(Ppt_Wen_2013), mean(Ppt_Wen_2014), mean(Ppt_Wen_2015))
-   
-   write.csv(x=y01_15_ppt, file=paste0(basin, "_01_15_mn_sum_precip.csv"), row.names = FALSE)
-   ####
+  
 ##################
 # Temperature
 # #################
-  ext <- extent(-125, -107, 40, 50)
-  mnNames <- NULL
   
-    for (j in 1981:2015)
-      {
-        year <- j
-        yr <- substr(j,3,4)
-        setwd(paste0("D:/OneDrive/work/GIS/PRISM/Temp/", year))
-        varName <- paste0("Ctmp", yr)
-        
-        
-        ##### create a list of only the grid files in a directory
-        
-        allFiles <- list.files(pattern="*bil.bil", full.names=TRUE)
-        xmlFiles <- list.files(pattern="*bil.bil.aux.xml", full.names=TRUE)
-        fileList <- allFiles[!allFiles %in% xmlFiles]
-        
-        ###### read in one grid to get the structure
-        
-        rRaster <- raster(fileList[1])
-        
-        ##### clip the raster to a reasonable PNW extent
-        
-        rExt <- crop(rRaster, ext)
-        
-        ##### convert the raster to points and build the data structure for the loop
-        
-        rPoints <- rasterToPoints(rExt)
-        
-        pts <- data.frame(rPoints[,1], rPoints[,2])
-        data.out <- data.frame(pts, extract(rRaster, pts))
-        data.out[data.out[,3] < 0, 3] <-  0
-        colnames(data.out) <- c("x", "y", paste0(varName,"001"))
-        #rPoints1 <- SpatialPoints(coordinates(rPoints), proj4string = CRS("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"))
-        
-        ##### loop thru all the files in the list and add them iteratively
-        
-        for (i in 2:365)
-          {
-            
-            r2 <- raster(fileList[i])
-            extData <- extract(r2, pts)
-            extData[extData < 0] <- 0
-            sumData <- extData + data.out[,i+1]
-            data.out <- cbind(data.out, sumData)
-            namer <- sprintf('%03d', i)
-            colnames(data.out)[i+2] <- paste0(varName, namer)
-          }
-        
-        data.out$PtID <- 1:89175
-        
-        write.dbf(data.out, file= paste0("SumTmp", year, ".dbf"))
-        
-      }
+  
+  for (j in 2010:2011)
+    {  
+      year <- j
+      yr <- j
+      setwd(paste0("D:/OneDrive/work/GIS/PRISM/Temp/", year))
+      varName <- paste0("Ctmp", yr)
+      ##### create a list of only the grid files in a directory
+      
+      allFiles <- list.files(pattern="*bil.bil", full.names=TRUE)
+      xmlFiles <- list.files(pattern="*bil.bil.aux.xml", full.names=TRUE)
+      fileList <- allFiles[!allFiles %in% xmlFiles]
+      
+      ###### read in one grid to get the structure
+      
+      rRaster <- raster(fileList[1])
+      
     
+      
+      data.out <- data.frame(pts, extract(rRaster, pts))
+      colnames(data.out) <- c("x", "y", paste0(varName,"001"))
+      data.out[,3][data.out[,3] < 0]  <- 0
+      
+      ##### loop thru all the files in the list and add them iteratively
+      
+      for (i in 2:365)
+      {
+        
+        r2 <- raster(fileList[i])
+        extData <- extract(r2, pts)
+        extData[extData < 0] <- 0
+        sumData <- extData + data.out[,i+1]
+        data.out <- cbind(data.out, sumData)
+        namer <- sprintf('%03d', i)
+        colnames(data.out)[i+2] <- paste0(varName, namer)
+      }
+      
+      data.out$PtID <- basinPts$PtID
+      write.dbf(data.out, file= paste0("SumTmp", year, ".dbf"))
+      
+      
+      assign(paste0("Tmp_", basin, "_", year), colMeans(data.out))
+      
+    }
+
+  
+  y30_temp <- c(mean(Tmp_JD_1981), mean(Tmp_JD_1982), mean(Tmp_JD_1983), mean(Tmp_JD_1984), mean(Tmp_JD_1985), mean(Tmp_JD_1986), mean(Tmp_JD_1987), mean(Tmp_JD_1988), mean(Tmp_JD_1989), mean(Tmp_JD_1990), mean(Tmp_JD_1991), mean(Tmp_JD_1992), mean(Tmp_JD_1993), mean(Tmp_JD_1994), mean(Tmp_JD_1995), mean(Tmp_JD_1996), mean(Tmp_JD_1997), mean(Tmp_JD_1998), mean(Tmp_JD_1999), mean(Tmp_JD_2000), mean(Tmp_JD_2001), mean(Tmp_JD_2002), mean(Tmp_JD_2003), mean(Tmp_JD_2004), mean(Tmp_JD_2005), mean(Tmp_JD_2006), mean(Tmp_JD_2007), mean(Tmp_JD_2008), mean(Tmp_JD_2009), mean(Tmp_JD_2010), mean(Tmp_JD_2011), mean(Tmp_JD_2012), mean(Tmp_JD_2013), mean(Tmp_JD_2014), mean(Tmp_JD_2015))
+  
+  y01_15_temp <- c(mean(Tmp_JD_2001), mean(Tmp_JD_2002), mean(Tmp_JD_2003), mean(Tmp_JD_2004), mean(Tmp_JD_2005), mean(Tmp_JD_2006), mean(Tmp_JD_2007), mean(Tmp_JD_2008), mean(Tmp_JD_2009), mean(Tmp_JD_2010), mean(Tmp_JD_2011), mean(Tmp_JD_2012), mean(Tmp_JD_2013), mean(Tmp_JD_2014), mean(Tmp_JD_2015))
+  
+  list <- mget(paste0("Tmp_", basin, "_", 1981:2010))
+  all <- do.call(rbind, list)
+  y30_Tmp <- colMeans(all[,3:367])
+  
+  plot(Tmp_JD_2000[3:367], pch=16, col="cornflowerblue", cex=.7, main = "Mean cumulative temp, John Day basin, 2000-2015", xlab="Julian Day", ylab="Precip", ylim=c(0,4000))
+  points(Tmp_JD_2001[3:367], pch=16, col="cyan4", cex=.7)
+  points(Tmp_JD_2002[3:367], pch=16, col="khaki", cex=.7)
+  points(Tmp_JD_2003[3:367], pch=16, col="deeppink4", cex=.7)
+  points(Tmp_JD_2004[3:367], pch=16, col="deeppink", cex=.7)
+  points(Tmp_JD_2009[3:367], pch=16, col="darkgrey", cex=.7)
+  points(Tmp_JD_2008[3:367], pch=16, col="lightblue", cex=.7)
+  points(Tmp_JD_2007[3:367], pch=16, col="red", cex=.7)
+  points(Tmp_JD_2011[3:367], pch=16, col="palevioletred", cex=.7)
+  points(Tmp_JD_2006[3:367], pch=16, col="darkgoldenrod1", cex=.7)
+  points(Tmp_JD_2005[3:367], pch=16, col="blueviolet", cex=.7)
+  points(Tmp_JD_2010[3:367], pch=16, col="lightgrey", cex=.7)
+  points(Tmp_JD_2012[3:367], pch=16, col="darkolivegreen4", cex=.7)
+  points(Tmp_JD_2013[3:367], pch=16, col="darkturquoise", cex=.7)
+  points(Tmp_JD_2014[3:367], pch=16, col="chartreuse2", cex=.7)
+  points(Tmp_JD_2015[3:367], pch=15, col="blue2", cex=.7)
+  
+  points(y30_Tmp[3:367], pch=16, col="black", cex=.8)
+  
+  legend(x=grconvertX(c(1.0,1.4), from='npc'),
+         y=grconvertY(c(0.6, 0.8), from='npc'), pch=16, bty="n", legend = c("00", "01", "02", "03", "04", "05", "06", "07","08","09", "10", "11", "12", "13", "14", "15"), col=c("cornflowerblue", "cyan4", "khaki", "deeppink4", "deeppink", "blueviolet", "darkgoldenrod1", "red", "lightblue", "black", "lightgrey", "palevioletred", "darkolivegreen4", "darkturquoise", "chartreuse2", "blue2"), cex=.65, xpd=NA)
+  
+ 
 ############# that one time I needed to reread everything ##########
   
-  for (j in 1983:2014)
+  for (j in 1982:2015)
     {
       year <- j
       setwd(paste0("D:/OneDrive/work/GIS/PRISM/Temp/", year))
-      test.in <- read.dbf(paste0("SumTmp", year, ".dbf"))
-      data.out_Wen <- test.in[test.in$PtID %in% basinPts$PtID,]
-      assign(paste0("Tmp_Wen_", year), colMeans(data.out_Wen))
-    }
-#################### This part just creates a list of all the vector names and row binds them ##############
+      data.in <- read.dbf(paste0("SumTmp", year, ".dbf"))
+      data.in[data.in < 0] <- 0
+      assign(paste0("Tmp_", basin, "_", year), colMeans(data.in))
+  }
   
-  list <- mget(paste0("Tmp_Wen_", 1981:2015))
-  all <- do.call(rbind, list)
-  
-  
-  
-######################
-# if going back later to process
-# #####################
+############# that one time I needed to rename everything ##########
   
   for (j in 1981:2015)
     {
       year <- j
-      yr <- substr(j,3,4)
-      setwd(paste0("D:/OneDrive/work/GIS/PRISM/Temp/", year))
-      data.in <- read.dbf(paste0("SumTmp", year, ".dbf"))
-      data.out <- data.in[data.in$PtID %in% basinPts$PtID,]
-      assign(paste0("Tmp_Wen_", year), colMeans(data.in)) 
+      setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year))
+      data.in <- read.dbf(paste0("SumPpt", year, ".dbf"))
+      write.dbf(data.out, file= paste0("SumPptJD", year, ".dbf"))
     }
+#################### This part just creates a list of all the vector names and row binds them ##############
   
+  lister <- mget(paste0("Ppt_JD_", 1981:2015))
+  all <- do.call(rbind, list)
+  y30_precip <- colMeans(all)
+  
+  y30_Ppt_mn<- mean(y30_precip[3:367])
+  col.rainbow <- rainbow(15)
+  
+  plot(y01_15_temp, y01_15_precip, pch=c(21,22,24), col="black", bg=col.rainbow, main="Mean sum temp/precip (calendar year)", xlab = "Mean temp", ylab = "Mean precip", cex=1.5,)
+  points(y30_Tmp_mn, y30_Ppt_mn, pch=8, col="black", cex=1.5)
+  
+
 ########################
   
   y30_Tmp_mn <- colMeans(all[,3:367])
@@ -410,24 +559,24 @@ library(gdalUtils)
   rm(list=ls(pattern="Ppt_JD_")) #first, get rid of a bunch of memory hogging stuff
   
   pts <- basinPts$PtID
-  
-  
+
   for (j in 1981:2015)
     {
       year <- j
-      setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year))
-      data.in <- read.dbf(paste0("SumPpt", year, ".dbf"))
-      data.out <- data.in[data.in$PtID %in% pts,]
-      write.dbf(data.out, paste0("SumPpt", basin, year, ".dbf"))
-      assign(paste0("Ppt_", basin, "_", year), colMeans(data.in)
+      setwd(paste0("D:/OneDrive/work/GIS/PRISM/Temp/", year))
+      data.in <- read.dbf(paste0("SumTmp", basin, year, ".dbf"))
+      assign(paste0("Tmp_", basin, "_", year), colMeans(data.in))
     }
-   
   
+  list <- mget(paste0("Tmp_JD_", 1981:2010))
+  all <- do.call(rbind, list)
+  y30_Tmp <- colMeans(all[,3:367])
   
-  lister <- levels(basinPts$HUC_10)
+  y30_mn_temp <- mean(y30_Tmp)
+  y30_mn_precip <- mean(y30_Ppt)
   
-  i <- lister[7]
-  HUCpts <- basinPts[basinPts$HUC_10 == i, "PtID"]
+  i <- 1
+  HUCpts <- basinPts[basinPts$HUC == i, "PtID"]
   
   for (j in 1981:2015)
     {
@@ -435,59 +584,42 @@ library(gdalUtils)
       setwd(paste0("D:/OneDrive/work/GIS/PRISM/", year))
       data.in <- read.dbf(paste0("SumPpt", basin, year, ".dbf"))
       data.out <- data.in[data.in$PtID %in% HUCpts,]
-      assign(paste0("Ppt_", basin, "_HUC_", 7, "_", year), colMeans(data.out))
+      assign(paste0("Ppt_", basin, "_HUC_", i, "_", year), colMeans(data.out))
     }
   
+    
+ 
+  lister <- mget(paste0("Tmp_", basin, "_HUC_", i, "_", 1981:2010))
+  all <- do.call(rbind, lister)
+  assign(paste0("y30_Tmp_HUC", i), colMeans(all))
   
-  listed <- mget(paste0("Ppt_", basin, "_HUC_", 5, "_", 1981:2010))
-  all <- do.call(rbind, listed)
-  assign(paste0("y30_Ppt_HUC", 5), colMeans(all))
+  y30_Tmp_HUC3_mn <- mean(y30_Tmp_HUC3[3:367])
+  y30_Ppt_HUC3_mn <- mean(y30_Ppt_HUC3[3:367])
   
-  y30_Tmp_HUC5_mn <- mean(y30_Tmp_HUC5[3:367])
-  y30_Ppt_HUC5_mn <- mean(y30_Ppt_HUC5[3:367])
+  Ann_mn_ppt_HUC1 <- c(mean(Ppt_JD_HUC_1_2000[3:367]), mean(Ppt_JD_HUC_1_2001[3:367]), mean(Ppt_JD_HUC_1_2002[3:367]), mean(Ppt_JD_HUC_1_2003[3:367]), mean(Ppt_JD_HUC_1_2004[3:367]), mean(Ppt_JD_HUC_1_2005[3:367]), mean(Ppt_JD_HUC_1_2006[3:367]), mean(Ppt_JD_HUC_1_2007[3:367]), mean(Ppt_JD_HUC_1_2008[3:367]), mean(Ppt_JD_HUC_1_2009[3:367]), mean(Ppt_JD_HUC_1_2010[3:367]), mean(Ppt_JD_HUC_1_2011[3:367]), mean(Ppt_JD_HUC_1_2012[3:367]), mean(Ppt_JD_HUC_1_2013[3:367]), mean(Ppt_JD_HUC_1_2014[3:367]), mean(Ppt_JD_HUC_1_2015[3:367]))
   
-  Ann_mn_ppt_HUC1 <- c(mean(Ppt_Wen_HUC_1_2000[3:367]), mean(Ppt_Wen_HUC_1_2001[3:367]), mean(Ppt_Wen_HUC_1_2002[3:367]), mean(Ppt_Wen_HUC_1_2003[3:367]), mean(Ppt_Wen_HUC_1_2004[3:367]), mean(Ppt_Wen_HUC_1_2005[3:367]), mean(Ppt_Wen_HUC_1_2006[3:367]), mean(Ppt_Wen_HUC_1_2007[3:367]), mean(Ppt_Wen_HUC_1_2008[3:367]), mean(Ppt_Wen_HUC_1_2009[3:367]), mean(Ppt_Wen_HUC_1_2010[3:367]), mean(Ppt_Wen_HUC_1_2011[3:367]), mean(Ppt_Wen_HUC_1_2012[3:367]), mean(Ppt_Wen_HUC_1_2013[3:367]), mean(Ppt_Wen_HUC_1_2014[3:367]), mean(Ppt_Wen_HUC_1_2015[3:367]))
+  Ann_mn_tmp_HUC1<- c(mean(Tmp_JD_HUC_1_2000[3:367]), mean(Tmp_JD_HUC_1_2001[3:367]), mean(Tmp_JD_HUC_1_2002[3:367]), mean(Tmp_JD_HUC_1_2003[3:367]), mean(Tmp_JD_HUC_1_2004[3:367]), mean(Tmp_JD_HUC_1_2005[3:367]), mean(Tmp_JD_HUC_1_2006[3:367]), mean(Tmp_JD_HUC_1_2007[3:367]), mean(Tmp_JD_HUC_1_2008[3:367]), mean(Tmp_JD_HUC_1_2009[3:367]), mean(Tmp_JD_HUC_1_2010[3:367]), mean(Tmp_JD_HUC_1_2011[3:367]), mean(Tmp_JD_HUC_1_2012[3:367]), mean(Tmp_JD_HUC_1_2013[3:367]), mean(Tmp_JD_HUC_1_2014[3:367]), mean(Tmp_JD_HUC_1_2015[3:367]))
+ 
   
-  Ann_mn_tmp_HUC1<- c(mean(Tmp_Wen_HUC_1_2000[3:367]), mean(Tmp_Wen_HUC_1_2001[3:367]), mean(Tmp_Wen_HUC_1_2002[3:367]), mean(Tmp_Wen_HUC_1_2003[3:367]), mean(Tmp_Wen_HUC_1_2004[3:367]), mean(Tmp_Wen_HUC_1_2005[3:367]), mean(Tmp_Wen_HUC_1_2006[3:367]), mean(Tmp_Wen_HUC_1_2007[3:367]), mean(Tmp_Wen_HUC_1_2008[3:367]), mean(Tmp_Wen_HUC_1_2009[3:367]), mean(Tmp_Wen_HUC_1_2010[3:367]), mean(Tmp_Wen_HUC_1_2011[3:367]), mean(Tmp_Wen_HUC_1_2012[3:367]), mean(Tmp_Wen_HUC_1_2013[3:367]), mean(Tmp_Wen_HUC_1_2014[3:367]), mean(Tmp_Wen_HUC_1_2015[3:367]))
+  Ann_mn_HUC_1 <- data.frame(Ppt=Ann_mn_ppt_HUC1, Tmp=Ann_mn_tmp_HUC1, year=sprintf('%02d', 0:15), HUC=1)
   
-  y30_temp <- c(mean(Tmp_Wen_1981), mean(Tmp_Wen_1982), mean(Tmp_Wen_1983), mean(Tmp_Wen_1984), mean(Tmp_Wen_1985), mean(Tmp_Wen_1986), mean(Tmp_Wen_1987), mean(Tmp_Wen_1988), mean(Tmp_Wen_1989), mean(Tmp_Wen_1990), mean(Tmp_Wen_1991), mean(Tmp_Wen_1992), mean(Tmp_Wen_1993), mean(Tmp_Wen_1994), mean(Tmp_Wen_1995), mean(Tmp_Wen_1996), mean(Tmp_Wen_1997), mean(Tmp_Wen_1998), mean(Tmp_Wen_1999), mean(Tmp_Wen_2000), mean(Tmp_Wen_2001), mean(Tmp_Wen_2002), mean(Tmp_Wen_2003), mean(Tmp_Wen_2004), mean(Tmp_Wen_2005), mean(Tmp_Wen_2006), mean(Tmp_Wen_2007), mean(Tmp_Wen_2008), mean(Tmp_Wen_2009), mean(Tmp_Wen_2010), mean(Tmp_Wen_2011), mean(Tmp_Wen_2012), mean(Tmp_Wen_2013), mean(Tmp_Wen_2014), mean(Tmp_Wen_2015))
-  
-  y01_15_temp <- c(mean(Tmp_Wen_2001), mean(Tmp_Wen_2002), mean(Tmp_Wen_2003), mean(Tmp_Wen_2004), mean(Tmp_Wen_2005), mean(Tmp_Wen_2006), mean(Tmp_Wen_2007), mean(Tmp_Wen_2008), mean(Tmp_Wen_2009), mean(Tmp_Wen_2010), mean(Tmp_Wen_2011), mean(Tmp_Wen_2012), mean(Tmp_Wen_2013), mean(Tmp_Wen_2014), mean(Tmp_Wen_2015))
-  
-  y30_ppt <- c(mean(Ppt_Wen_1981), mean(Ppt_Wen_1982), mean(Ppt_Wen_1983), mean(Ppt_Wen_1984), mean(Ppt_Wen_1985), mean(Ppt_Wen_1986), mean(Ppt_Wen_1987), mean(Ppt_Wen_1988), mean(Ppt_Wen_1989), mean(Ppt_Wen_1990), mean(Ppt_Wen_1991), mean(Ppt_Wen_1992), mean(Ppt_Wen_1993), mean(Ppt_Wen_1994), mean(Ppt_Wen_1995), mean(Ppt_Wen_1996), mean(Ppt_Wen_1997), mean(Ppt_Wen_1998), mean(Ppt_Wen_1999), mean(Ppt_Wen_2000), mean(Ppt_Wen_2001), mean(Ppt_Wen_2002), mean(Ppt_Wen_2003), mean(Ppt_Wen_2004), mean(Ppt_Wen_2005), mean(Ppt_Wen_2006), mean(Ppt_Wen_2007), mean(Ppt_Wen_2008), mean(Ppt_Wen_2009), mean(Ppt_Wen_2010), mean(Ppt_Wen_2011), mean(Ppt_Wen_2012), mean(Ppt_Wen_2013), mean(Ppt_Wen_2014), mean(Ppt_Wen_2015))
-  
-  y01_15_ppt <- c(mean(Ppt_Wen_2001), mean(Ppt_Wen_2002), mean(Ppt_Wen_2003), mean(Ppt_Wen_2004), mean(Ppt_Wen_2005), mean(Ppt_Wen_2006), mean(Ppt_Wen_2007), mean(Ppt_Wen_2008), mean(Ppt_Wen_2009), mean(Ppt_Wen_2010), mean(Ppt_Wen_2011), mean(Ppt_Wen_2012), mean(Ppt_Wen_2013), mean(Ppt_Wen_2014), mean(Ppt_Wen_2015))
-  
-  
-  Ann_mn_HUC_7 <- data.frame(Ppt=Ann_mn_ppt_HUC_7, Tmp=Ann_mn_tmp_HUC_7, year=sprintf('%02d', 0:15), HUC=7)
-  
-  list <- mget(paste0("Ppt_", basin, "_", 1981:2010))
-  all <- do.call(rbind, list)
-  y30_precip <- colMeans(all[,3:367])
-  y30_precip_mn <- mean(y30_precip)
-  
-  plot(Ann_mn_tmp_HUC1, Ann_mn_ppt_HUC1, pch=21, col="black", bg="lightblue", main="Mean sum temp/precip Wen (by HUC) 2000-2015", xlab = "Mean temp", ylab = "Mean precip", cex=1.5, xlim=c(600,1900), ylim=c(100,1300),)
-  points(Ann_mn_tmp_HUC2, Ann_mn_ppt_HUC2, pch=22, col="black", bg="orange", cex=1.5)
-  points(Ann_mn_tmp_HUC_3, Ann_mn_ppt_HUC_3, pch=24, col="black", bg="lightgreen", cex=1.5)
-  points(Ann_mn_tmp_HUC_4, Ann_mn_ppt_HUC_4, pch=23, col="black", bg="yellow", cex=1.5)
-  points(Ann_mn_tmp_HUC_5, Ann_mn_ppt_HUC_5, pch=1, col="blue", bg="lightblue", cex=1.5)
-  points(Ann_mn_tmp_HUC_6, Ann_mn_ppt_HUC_6, pch=2, col="green", bg="lightgreen", cex=1.5)
-  points(Ann_mn_tmp_HUC_7, Ann_mn_ppt_HUC_7, pch=7, col="red", bg="orange", cex=1.5)
-  points(y30_Tmp_HUC1_mn, y30_Ppt_HUC1_mn, pch="#", col="lightblue", cex=1.5)
-  points(y30_Tmp_HUC2_mn, y30_Ppt_HUC2_mn, pch="#", col="orange", cex=1.5)
-  points(y30_Tmp_HUC3_mn, y30_Ppt_HUC3_mn, pch="#", col="lightgreen", cex=1.5)
+  plot(Ann_mn_HUC_1$Tmp, Ann_mn_HUC_1$Ppt, pch=21, col="black", bg="blue", main="Mean sum temp/precip JD (by HUC) 2000-2015", xlab = "Mean temp", ylab = "Mean precip", cex=1.5, xlim=c(1100,2100), ylim=c(100,350),)
+  points(Ann_mn_HUC_2$Tmp, Ann_mn_HUC_2$Ppt, pch=22, col="black", bg="red", cex=1.5)
+  points(Ann_mn_HUC_3$Tmp, Ann_mn_HUC_3$Ppt, pch=24, col="black", bg="green", cex=1.5)
+  points(Ann_mn_HUC_4$Tmp, Ann_mn_HUC_4$Ppt, pch=23, col="black", bg="yellow", cex=1.5)
+  points(y30_Tmp_HUC1_mn, y30_Ppt_HUC1_mn, pch="#", col="blue", cex=1.5)
+  points(y30_Tmp_HUC2_mn, y30_Ppt_HUC2_mn, pch="#", col="red", cex=1.5)
+  points(y30_Tmp_HUC3_mn, y30_Ppt_HUC3_mn, pch="#", col="green", cex=1.5)
   points(y30_Tmp_HUC4_mn, y30_Ppt_HUC4_mn, pch="#", col="yellow", cex=1.5)
-  points(y30_Tmp_HUC5_mn, y30_Ppt_HUC5_mn, pch="#", col="blue", cex=1.5)
-  points(y30_Tmp_HUC6_mn, y30_Ppt_HUC6_mn, pch="#", col="green", cex=1.5)
-  points(y30_Tmp_HUC7_mn, y30_Ppt_HUC7_mn, pch="#", col="red", cex=1.5)
-  points(y30_Tmp_mn, y30_precip_mn, pch=8, col="black", cex=2.0)
+  points(y30_mn_temp, y30_mn_precip, pch=8, col="black", cex=2.5)
   
-  legend("topright", pch=c(21,22,24,23,1,2,7,8), col=c("black", "black", "lightgreen", "yellow", "blue", "green", "red", "black"), bg=c("lightblue", "orange", "lightgreen", "yellow", "blue", "green", "red", "black"),bty="n", legend = c("SFJD", "NFJD", "MFJD", "LFJD", "30yJD"), cex=.7, pt.cex=.95)
-  textxy(Ann_mn_HUC_1$Tmp, Ann_mn_HUC_1$Ppt, Ann_mn_HUC_1$year, cex=.8, offset = 1.0, pos=2)
+  legend("topright", pch=c(16,15,17,18,8), col=c("blue", "red", "green", "yellow", "black"), bg=c("blue", "red", "green", "yellow"),bty="n", legend = c("SFJD", "NFJD", "MFJD", "LFJD", "30yJD"), cex=.7, pt.cex=.95)
+
+  #Ann_mn_HUC_4$year[1:15] <- ""  
   
-  listed <- mget(paste0("Ppt_", basin, "_HUC_", 5, "_", 1981:2015))
-  all <- do.call(rbind, listed)
-  write.csv(all, paste0("Ppt_", basin, "_HUC_1981_2015.csv"))
+  textxy(Ann_mn_HUC_1$Tmp, Ann_mn_HUC_1$Ppt, Ann_mn_HUC_1$year, cex=.8, offset = 1.0, pos=1)
+  
+  
 ###########################################
 # parsing annual data into water-year sets
 ##########

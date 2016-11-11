@@ -463,7 +463,12 @@ setwd(modelPath)
   
   network <- readOGR(dsn=".", layer = netname)
   error_pts@data[error_pts@data == 0] <- NA
-  error_pts@data <- error_pts@data[,3]
+  error_pts@data <- error_pts@data[,-3]
+  network@data <- network@data[,-1]
+  
+  data <- network@data[,3:48]
+  data[data < -0.5] = -0.5
+  network@data[,3:48] <- data
   
   seis = c("#AA0000", "#D00000", "#F70000", "#FF1D00", "#FF4400", "#FF6A00", "#FF9000", "#FFB700", "#FFDD00", "#FFE200", "#BDFF0C", "#73FF1A", "#3FFA36", "#16F45A", "#00D08B", "#0087CD", "#0048FA", "#0024E3")
   seis <- rev(seis)
@@ -497,10 +502,10 @@ setwd(modelPath)
       plot(network, col=fix3.colors, bg="black", fg="white")
       points(error_pts, pch=16, col="gray40", cex=cexEr)
       
-      legend("topright", fill = attr(fix3.colors, "palette"), legend = c("0-2","2-4","4-6","6-8","8-10","10-12","12-14","14-16","16-18","18+"), bty = "n", cex=.5, inset=c(0,0), text.col="white");
-      legend("bottomright", pch=16, col="gray40", pt.cex=c(0.5, 0.75, 1.0, 1.25), legend = c("+/- 0-1","+/- 1-2","+/- 2-3","+/- 3+"), bty = "n", cex=.5, inset=c(0,0), text.col="white");
+      legend("topright", fill = attr(fix3.colors, "palette"), title="8-day Mean (°C)",legend = c("0-2","2-4","4-6","6-8","8-10","10-12","12-14","14-16","16-18","18+"), bty = "n", cex=.5, inset=c(0,0), text.col="white");
+      legend("bottomright", pch=16, col="gray40", pt.cex=c(0.5, 0.75, 1.0, 1.25), title="Model error (°C)", legend = c("0-1","1-2","2-3","3+"), bty = "n", cex=.5, inset=c(0,0), text.col="white");
       
-      mtext("Asotin 8-day mean ('C)",side =3, outer=TRUE, line=-3, col="white", cex=.7)
+      mtext("Asotin 8-day mean (°C)",side =3, outer=TRUE, line=-3, col="white", cex=.7)
       mtext(paste0("Julian Day ", namey),side =1, outer=TRUE, line=-3, col="white", cex=.7)
       
       tmp2 <- subplot(
@@ -517,6 +522,6 @@ setwd(modelPath)
 
 setwd(paste0(mainPath, longBasin, "/", yearPath, "/graphics/"))
 
-system('"C:/Program Files/ImageMagick-7.0.1-Q16/convert.exe" -delay 20 -morph 3 *.png example.mpeg')
+system('"C:/Program Files/ImageMagick-7.0.1-Q16/convert.exe" -delay 20 -morph 3 *.png Asotin_2014_8D_Mn.mpeg')
 
 ############

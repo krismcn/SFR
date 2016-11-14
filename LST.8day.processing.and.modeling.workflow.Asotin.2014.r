@@ -1,22 +1,16 @@
 ############################################################################################################
 # This set of R scripts combines a the series of scripts that make up the work flow to predict and validate 
-# stream temperature for a summer max temps MODIS 1km LST data
+# stream temperature using MODIS 1km LST data
 # The initial input is an LST_YY.dbf which is a table (columns = days, rows = sites) with the grid value for each grid cell in the spatial extent
 # 
 # Edited Aug 2014 to add the PRESS stastic output
 # Should look at PRESS output to screen to chose model - only that model will output resids and preds.
 
+# Edited Aug 2014 to add the PRESS stastic output
 # Edited Oct 2015 for EP watershed summer output
 # Edited Jan 2016 to update the gap-filling interpolation functions
-# Edited Aug 2014 to add the PRESS stastic output
 # Edited 28 March 2016 for Secesh
 
-##############################################################################################
-# This section reads in the 1km LST data for a year, uses a 4th order polynomial to fill in Julian day 1 & 365 (if they are missing)
-# then fills any remaining gaps across the year at each pixel with a linear interpolation.
-##############################################################################################
-
-# The Secesh is a sub-basin of the SFS, so some of the file paths point there
 
 library(timeSeries)
 library(lattice)
@@ -44,10 +38,10 @@ library(ggplot2)
   
   
            
-#################################################################
-#Logger prediction modeling part
-
-#################################################################
+# ################################################################
+# Logger prediction modeling part
+# Formats the data in preperation for building models
+# ################################################################
   
   
   setwd(paste0(mainPath, midBasin))
@@ -117,7 +111,7 @@ library(ggplot2)
 
 
 # ###############################
-# full year
+# full year models
 # ##################################
 
   setwd(paste0(mainPath, subDir, longBasin, "/", yearPath))
@@ -136,7 +130,7 @@ library(ggplot2)
   mod <- lm(y ~ x + I(x^2) + z + e)
   sum_mod <- summary(mod)
   pred.y <- predict(mod)
-  plot(pred.y, y, main = "8-day Max Full Year")
+  plot(pred.y, y, main = "8-day Full Year")
   abline(0,1)
   post_mod <- summary(lm(y ~ pred.y))
   gvmodel <- gvlma(mod)
@@ -173,9 +167,11 @@ library(ggplot2)
   fit <- lm(y~ pred.y)
   plot(fit)
   summary(fit)
+  
 # ####################################
 # spring/fall
 # #####################################
+  
   setwd(paste0(mainPath, longBasin, "/", yearPath))
 
   coeffs_out <- data.frame(Int=numeric(2), bLST=numeric(2), bLST2=numeric(2), bJul=numeric(2), bElev=numeric(2))
@@ -183,11 +179,6 @@ library(ggplot2)
   rownames(metrics_out) <- c("Spring", "Fall")
   rownames(coeffs_out) <- c("Spring", "Fall")
 
-# 
-#   data.sp <- data.sp[-131,]
-#   data.sp <- data.sp[-125,]
-#   data.sp <- data.sp[-119,]
-#   
 
   y <- data.sp$y
   x <- data.sp$x
@@ -315,7 +306,7 @@ write.table(x=metrics_out, append=F,row.names=T, file = paste0("All_data_", basi
   summary(fit)
 
 ########################################################################################################
-# This part applies the model coefficients to the LST to generate 8-day MAX temp estimates for 1 July - 30 Sept
+# This part applies the model coefficients to the LST to generate 8-day temp estimates 
 ########################################################################################################
   
   
@@ -335,7 +326,7 @@ setwd(paste0(mainPath, longBasin, "/"))
 
 setwd(paste0(mainPath, longBasin, "/", yearPath))
 
-  coeffs.in <- read.csv(paste0("All_data_", basin, "_", yearPath, "_mod_coeffs_Mn.csv"), stringsAsFactors=FALSE)
+  coeffs.in <- read.csv(paste0("All_data_", basin, "_", yearPath, "_mod_coeffs_Max.csv"), stringsAsFactors=FALSE)
   LogPred.out <- LST.elev[,c(2:47,48,1)]
   LogPred.out[,1:46] <- 0
   rcas <- unique(LST.elev$RCAID)
@@ -378,9 +369,9 @@ write.dbf(LogPred.out, file = paste0("predt", yearPath, "_", basin, "_8D_Mn.dbf"
 
 
 
-##########################
-#This parts formats the error by day/site info
-###########################
+# #########################
+# This parts formats the error by day/site info
+# ##########################
 
   NoNA.xyz <- read.csv(paste0(basin, "_", yearPath, "_8Day_model_data.csv"), stringsAsFactors = TRUE)
   NoNA.xyz <- orderBy(~z, NoNA.xyz)
@@ -441,11 +432,12 @@ write.dbf(LogPred.out, file = paste0("predt", yearPath, "_", basin, "_8D_Mn.dbf"
 write.dbf(Error.pts.out, file = paste0("Error", yearPath, "_", basin, "_8D_Mn.dbf")) 
 write.csv(Error.pts.out, file = paste0("Error", yearPath, "_", basin, "_8D_Mn.csv"))
 #####Join this output to the point coverage
-###############################################
+
+# ##############################################
 #
-# Edited 5 may 2016 to add animation output
-# Edited 25 May 2016 to add HUC display
-################################################
+# animation output
+#
+# ###############################################
 
 library(rgdal)
 library(RColorBrewer)

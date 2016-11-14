@@ -42,11 +42,11 @@ library(gvlma)
   LST.in.1 <- read.csv(paste0("Ent_LST_", yearPath1, ".csv"), stringsAsFactors = FALSE)
   LST.in.2 <- read.csv(paste0("Ent_LST_", yearPath2, ".csv"), stringsAsFactors = FALSE)
   
-  newnamesnum <- substring (colnames(LST.in.1)[3:48],9,13)
+  newnamesnum <- substring (colnames(LST.in.1)[3:39],9,13)
   newnamesnum <- as.numeric(newnamesnum)
-  colnames(LST.in.1)[3:48] <- newnamesnum
+  colnames(LST.in.1)[3:39] <- newnamesnum
 
-  colnames(LST.in.2)[3:48] <-gsub("X", "", colnames(LST.in.2)[3:48])
+  colnames(LST.in.2)[3:39] <-gsub("X", "", colnames(LST.in.2)[3:39])
 
   LST.in <- cbind(LST.in.1[,27:48], LST.in.2[,3:26])
                   
@@ -409,8 +409,9 @@ library(Hmisc)
 
 setwd(paste0(mainPath, longBasin, "/", yearPath))
 
-
-#_________Min_______________________ 
+# #######
+#######_________Min_______________________ 
+# ########
 
   Min.in <- read.dbf("predt2013_BNG_8D_Min.dbf") 
   
@@ -443,3 +444,229 @@ setwd(paste0(mainPath, longBasin, "/", yearPath))
   
   write.dbf(MinSumm.out, file = "BNG_2013_min_summary_All.dbf")
   write.csv(MinSumm.out, file = "BNG_2013_min_summary_All.csv", row.names = F)
+  
+# #########################
+#This parts formats the error by day/site info
+# ##########################
+  setwd(paste0(mainPath3, subdir2, yrPath1, "_", yrPath2, "_Min/"))
+  
+  NoNA.xyz <- read.csv(paste0(basin, "_", yrPath1, "_", yrPath2, "_8Day_Min_model_data_LST.csv"), stringsAsFactors = FALSE)
+  NoNA.xyz <- orderBy(~z, NoNA.xyz)
+  
+  minrow <- which.min(NoNA.xyz$y)
+  split <- NoNA.xyz[minrow, 'z']
+  data.cool <- NoNA.xyz[1:minrow,]
+  maxrow <- which.max(data.cool$y)
+  data.cool <- data.cool[(maxrow+1):dim(data.cool)[1],]
+  min <- data.cool$z[1]
+  
+  data.warm <- NoNA.xyz[(minrow+1):nrow(NoNA.xyz),]
+  maxrow <- which.max(data.warm$y)
+  max <- data.warm$z[maxrow]
+  data.warm <- data.warm[data.warm$z < max+1,]
+  
+  plot(data.cool$x, data.cool$y)
+  points(data.cool$x, data.cool$y, pch=16, col="cadetblue4")
+  points(data.warm$x, data.warm$y, pch=16, col="chocolate2")
+  
+  y <- data.cool$y
+  x <- data.cool$x
+  z <- data.cool$z
+  e <- data.cool$e
+  plot(z, y)  
+  plot(x, y)
+  
+  mod <- lm(y ~ x + I(x^2) + e)
+  sum_mod <- summary(mod)
+  coeffs <- as.matrix(coefficients(mod))
+  pred.y <- predict(mod)
+  
+  pred.y[pred.y < -0.5] = -0.5
+  
+  pred.new <- predict(mod, data = data.cool)
+  pred.new[pred.new < -0.5] = -0.5
+  data.cool$pred <- unlist(pred.new)
+  
+  y <- data.warm$y
+  x <- data.warm$x
+  z <- data.warm$z
+  e <- data.warm$e
+  plot(z, y)  
+  plot(x, y)
+  
+  mod <- lm(y ~ x + I(x^2) + e)
+  sum_mod <- summary(mod)
+  coeffs <- as.matrix(coefficients(mod))
+  pred.y <- predict(mod)
+  pred.y[pred.y < -0.5] = -0.5
+  
+  pred.new <- predict(mod, data=data.warm)
+  pred.new[pred.new < -0.5] = -0.5
+  data.warm$pred <- unlist(pred.new)
+  
+  names.out <- unique(NoNA.xyz$z)
+  error.pts <- rbind(data.cool, data.warm)
+  SiteID <- unique(error.pts$SiteName)
+  SiteID <- as.matrix(SiteID)
+  Error.pts.out <- matrix(nrow = length(SiteID), ncol = (length(names.out)+1))
+  
+  errorName <- paste0("JulDay_", names.out)
+  
+  Error.pts.out[1:length(SiteID), 1] <- unlist(SiteID)[1:length(SiteID)]
+  Error.pts.out <- as.data.frame(Error.pts.out, stringsAsFactors = FALSE)
+  colnames(Error.pts.out)[2:(length(names.out)+1)] <- names.out
+  colnames(Error.pts.out)[1] <- "SiteName"
+  
+  
+  for (i in SiteID) 
+    { 
+      error.site <- error.pts[error.pts$SiteName  == i,]
+      error.site$error <- error.site[,'y']-error.site[,'pred']
+      
+      
+      error <- matrix(ncol=1, nrow=length(names.out))
+      error[,1] <- names.out
+      error <- data.frame(error)
+      colnames(error) <- c("JulDay")
+      
+      error.site.fill <- merge(error, error.site, by.x = "JulDay", by.y = "z", all.x=TRUE, all.y = FALSE)
+      Error.pts.out[Error.pts.out$SiteName==i,2:(length(names.out)+1)] <- as.numeric(unlist(error.site.fill$error))
+    }
+  
+  Error.pts.out[,2:(length(names.out)+1)] <- sapply(Error.pts.out[,2:(length(names.out)+1)], as.numeric)
+  
+  Error.pts.out[,2:(length(names.out)+1)] <- round(Error.pts.out[,2:(length(names.out)+1)], digits=3)
+  
+  write.dbf(Error.pts.out, file = paste0("Error", "_", basin, "_", yrPath1, "_", yrPath2, "_8D_Min.dbf")) 
+  write.csv(Error.pts.out, file = paste0("Error", "_", basin, "_", yrPath1, "_", yrPath2, "_8D_Min.csv"))
+  
+  ###############################################
+  # shapefile output
+  ###############################################
+  library(timeSeries)
+  library(lattice)
+  library(foreign)
+  library(doBy)
+  library(qpcR)
+  library(pls)
+  library(boot)
+  library(Hmisc)
+  library(readxl)
+  library(lubridate)
+  library(zoo)
+  library(car)
+  library(gvlma)
+  library(ggplot2)
+  library(rgdal)
+  library(RColorBrewer)
+  library(classInt)
+  
+  basin <- "Ent"
+  midBasin <- "Entiat"
+  longBasin <- "Entiat"
+  yrPath1 <- "12"
+  yrPath2 <- "13"
+  dataPath <- "D:/OneDrive/work/research/CHaMP/GIS/coverages/"
+  mainPath <- "D:/OneDrive/work/research/CHaMP/CHaMP_data/"
+  seis = c("#AA0000", "#D00000", "#F70000", "#FF1D00", "#FF4400", "#FF6A00", "#FF9000", "#FFB700", "#FFDD00", "#FFE200", "#BDFF0C", "#73FF1A", "#3FFA36", "#16F45A", "#00D08B", "#0087CD", "#0048FA", "#0024E3")
+  seis <- rev(seis)
+  
+  projname <- paste0(longBasin, "_net_rca")
+  
+  setwd(paste0(dataPath, longBasin))
+  
+  proj_layer <- readOGR(dsn=".", layer = projname)
+  
+  setwd(paste0(mainPath, "/Min_temp_models/"))
+  
+  netname <- paste0(basin, "_", yrPath1, "_", yrPath2, "_8D_winter_min")
+  network <- readOGR(dsn=".", layer = netname)
+  network <- spTransform(network, proj4string(proj_layer))
+  
+  # #### plot it to make sure it looks right ######### 
+  
+  
+  fix3 <- classIntervals(network@data[,10], n = 11, style = "fixed",fixedBreaks=c(-1,0,1,2,4,6,8,10,12,14,20))
+  fix3.colors <- findColours(fix3,pal=seis)
+  plot(network, col=fix3.colors, bg="black", fg="white")
+  
+################################################
+# animation
+################################################
+  
+library(rgdal)
+library(RColorBrewer)
+library(classInt)
+  
+  
+  modelPath <- paste0(mainPath, "Min_temp_models/")
+  
+  shpPath <- paste0(modelPath, "graphics/")
+  
+  netname <- paste0(basin, "_", yrPath1, "_", yrPath2, "_8D_winter_min")
+  ptsname <- paste0(basin, "_", yrPath1, "_", yrPath2, "_8D_winter_min_error")
+  
+  setwd(modelPath)
+  
+  error_pts <- readOGR(dsn=".", ptsname)
+  error_pts <- spTransform(error_pts, proj4string(proj_layer))
+  
+  error_pts@data <- error_pts@data[,-3]
+  setwd(shpPath)
+  
+  seis = c("#AA0000", "#D00000", "#F70000", "#FF1D00", "#FF4400", "#FF6A00", "#FF9000", "#FFB700", "#FFDD00", "#FFE200", "#BDFF0C", "#73FF1A", "#3FFA36", "#16F45A", "#00D08B", "#0087CD", "#0048FA", "#0024E3")
+  seis <- rev(seis)
+  
+  names.out <- colnames(network@data[3:39])
+  namesnum <- as.numeric(gsub("Tmin_", "", colnames(network@data[3:39])))
+  means <- colMeans(network@data[3:39])
+  SDs <- colStdevs(network@data[3:39])
+  yplus <- means + SDs
+  yminus <- means - SDs
+  df <- data.frame(means=means, SDs=SDs, names=namesnum)
+  sequ <- c(1:39)
+  namer <- sprintf('%03d', sequ)
+  fix4 <- classIntervals(means, n = 10, style = "fixed",fixedBreaks=c(-1,0,1,2,4,6,8,10,12,14,20))
+  fix4.colors <- findColours(fix4,pal=seis)
+  
+  for (i in 3:39)
+    {
+      
+      namey <- gsub("Tmin_", "", colnames(network@data)[i])
+      
+      filename <- paste0(shpPath, namer[i-2], ".png", sep="")
+      png(filename=filename, res = 300, width = 1500, height = 1500, units = "px", bg="black")
+      
+      fix3 <- classIntervals(network@data[,i], n = 11, style = "fixed",fixedBreaks=c(-1,0,1,2,4,6,8,10,12,14,24))
+      fix3.colors <- findColours(fix3,pal=seis)
+      
+      cexEr <- ifelse(abs(error_pts@data[,i]) == 0, 0,
+                      ifelse(abs(error_pts@data[,i]) <= 1, 0.5,
+                             ifelse(abs(error_pts@data[,i])>1, 0.75,
+                                    ifelse(abs(error_pts@data[,i])>2, 1.0,
+                                           ifelse(abs(error_pts@data[,i])>3, 1.25, NA)))))
+      
+      plot(network, col=fix3.colors, bg="black", fg="white")
+      points(error_pts, pch=16, col="gray40", cex=cexEr)
+      
+      legend("right", fill = attr(fix3.colors, "palette"), title="8-day Min (°C)", legend = c("-1-0","0-1","1-2","2-4","4-6","6-8","8-10","10-12","12-14", "14+"), bty = "n", cex=.5, inset=c(.1,0), text.col="white");
+      legend(x=grconvertX(c(0.05, 0.25), from='npc'), 
+             y=grconvertY(c(0.3, 0.5), from='npc'),, title="Model error (°C)", legend = c("0-1","1-2","2-3","3+"), bty = "n", pch=16, pt.cex=c(0.5, 0.75, 1.0, 1.5), col = "gray40", cex=.5, text.col="white");
+      
+      
+      title("Entiat 8-day min 2012-2013 (°C)", sub = paste0("Julian Day ", namey), line=-0.9, adj=.80, col.main="white", col.sub="white", outer=FALSE, cex.main=0.5, cex.sub=0.5)
+      tmp2 <- subplot(
+        plot(sequ[1:(i-2)], means[1:(i-2)], col=fix4.colors, pch=16, bty="n", xlim=c(1,44), ylim=c(-1,18), cex.main=.8, main="Basin mean", adj=0, xaxt='n', xlab='',ylab='', col.lab="white", cex.axis=0.5, cex.lab = 0.25, col.axis="white", col.main = "white", bg="black"), 
+        x=grconvertX(c(0.1,0.45), from='npc'), 
+        y=grconvertY(c(0.05, 0.20), from='npc'),
+        size=c(1,1.5), vadj=0.5, hadj=0.5, 
+        pars=list( mar=c(0,0,0,0)+0.1, cex=0.5))
+      
+      
+      dev.off()
+    }
+  
+  
+  setwd(shpPath) 
+  system('"C:/Program Files/ImageMagick-7.0.1-Q16/convert.exe" -delay 20 -morph 3 *.png Ent_12_13_min.mpeg')
+  

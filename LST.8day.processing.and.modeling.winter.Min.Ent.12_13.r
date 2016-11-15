@@ -388,63 +388,7 @@ write.dbf(LogPred.out, file = "predt_12_13_Ent_8D_Min.dbf")
 
 
 
-##############
-# summary
-############
 
-
-
-mainPath <- "D:/OneDrive/work/research/CHaMP/CHaMP_data/"
-yearPath <- "2013"  
-longBasin <- "Big_Navarro"
-
-library(timeSeries)
-library(lattice)
-library(foreign)
-library(doBy)
-library(qpcR)
-library(pls)
-library(boot)
-library(Hmisc)
-
-setwd(paste0(mainPath, longBasin, "/", yearPath))
-
-# #######
-#######_________Min_______________________ 
-# ########
-
-  Min.in <- read.dbf("predt2013_BNG_8D_Min.dbf") 
-  
-  rcas <- unique(Min.in$RCAID)
-  
-  MinSumm.out <- data.frame ("RCAID" = rcas)
-  
-    for (i in 1:length(rcas)) 
-      { 
-        l <- rcas[i]
-        MinRCA <- Min.in[Min.in$RCAID == l,] #grab days for one RCA 
-        MinMin <- min(MinRCA[2:47])
-        sdMn <- sd(MinRCA[2:47])
-        SE = sdMn/sqrt(46)
-        E = qt(.975, df=45)∗SE
-        MnMin <- mean(unlist(MinRCA[2:47]))
-        Cnt3 <- sum(MinRCA[2:47] < 3)
-        Cnt6 <- sum(MinRCA[2:47] < 6)
-        MinSumm.out$MinMin[i] <- MinMin 
-        MinSumm.out$MnMin[i] <- MnMin
-        MinSumm.out$sdMn[i] <- sdMn
-        MinSumm.out$CIMn[i] <- E
-        MinSumm.out$Cnt3[i] <- Cnt3
-        MinSumm.out$Cnt6[i] <- Cnt6
-      } 
-  
-  
-  
-  colnames(MinSumm.out) <- c("RCAID", "MinMin13","MnMin13", "sdMnMin13", "CIMnMin13", "Cnt3Min13", "Cnt6Min13")
-  
-  write.dbf(MinSumm.out, file = "BNG_2013_min_summary_All.dbf")
-  write.csv(MinSumm.out, file = "BNG_2013_min_summary_All.csv", row.names = F)
-  
 # #########################
 #This parts formats the error by day/site info
 # ##########################

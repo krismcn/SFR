@@ -448,6 +448,68 @@ error.pts <- rbind(data.sp, data.fall)
   write.dbf(Error.pts.out, file = paste0("Error", yearPath, "_", basin, "_8D_Mn.dbf")) 
   write.csv(Error.pts.out, file = paste0("Error", yearPath, "_", basin, "_8D_Mn.csv"))
 
+# ##############################################
+# shapefile output
+# ##############################################
+  library(timeSeries)
+  library(lattice)
+  library(foreign)
+  library(doBy)
+  library(qpcR)
+  library(pls)
+  library(boot)
+  library(Hmisc)
+  library(readxl)
+  library(lubridate)
+  library(zoo)
+  library(car)
+  library(gvlma)
+  library(ggplot2)
+  library(rgdal)
+  library(RColorBrewer)
+  library(classInt)
+  
+  basin <- "Ent"
+  midBasin <- "Entiat"
+  longBasin <- "Entiat"
+  yrPath <- "14"
+  yearPath <- "2014"
+  subDir <- "Entiat/"
+  dataPath <- "D:/OneDrive/work/research/CHaMP/GIS/coverages/"
+  mainPath <- "D:/OneDrive/work/research/CHaMP/CHaMP_data/"
+  
+  seis = c("#AA0000", "#D00000", "#F70000", "#FF1D00", "#FF4400", "#FF6A00", "#FF9000", "#FFB700", "#FFDD00", "#FFE200", "#BDFF0C", "#73FF1A", "#3FFA36", "#16F45A", "#00D08B", "#0087CD", "#0048FA", "#0024E3")
+  seis <- rev(seis)
+  
+  projname <- paste0(longBasin, "_net_rca")
+  
+  setwd(paste0(dataPath, longBasin))
+  
+  proj_layer <- readOGR(dsn=".", layer = projname)
+  
+  netname <- paste0(basin, "_STHD_net")
+  network <- readOGR(dsn=".", layer = netname)
+  network <- spTransform(network, proj4string(proj_layer))
+  
+  setwd(paste0(mainPath, longBasin, "/", yearPath, "/"))
+  
+  preds <- read.dbf(paste0("predt", yearPath, "_", basin, "_8D_Mn.dbf"))
+  netmerge <- merge(network, preds, by.x='RCAID', by.y = 'RCAID')
+  
+  
+# #### plot it to make sure it looks right ######### 
+  
+  
+  fix3 <- classIntervals(netmerge@data[,10], n = 11, style = "fixed",fixedBreaks=c(-1,0,1,2,4,6,8,10,12,14,20))
+  fix3.colors <- findColours(fix3,pal=seis)
+  plot(netmerge, col=fix3.colors, bg="black", fg="white")
+  
+# #################################################  
+  
+  setwd(paste0(dataPath, longBasin))
+  layername <- paste0(basin, "_", yearPath, "_8D_mn")
+  writeOGR(netmerge, dsn=".", layer=layername, driver="ESRI Shapefile")
+  
 ###############################################
 #
 # Edited 5 may 2016 to add animation output
@@ -456,8 +518,8 @@ error.pts <- rbind(data.sp, data.fall)
 library(rgdal)
 library(RColorBrewer)
 library(classInt)
-#library(TeachingDemos)
 
+  shpPath <- paste0(modelPath, "graphics/")
   modelPath <- paste0("D:/OneDrive/work/research/CHaMP/CHaMP_data/", yearPath, "_temp_CHaMP/")
   ptsPath <- paste0("D:/OneDrive/work/research/CHaMP/CHaMP_data/", longBasin, "/", "Mean_models")
   
@@ -468,14 +530,15 @@ library(classInt)
   network <- readOGR(dsn=paste0(mainPath, yearPath, "_temp_CHaMP"), layer = netname)
   error_pts <- readOGR(dsn=".", "Ent_Error_2014_8D_Mn")
   
+  setwd(shpPath)
   seis = c("#AA0000", "#D00000", "#F70000", "#FF1D00", "#FF4400", "#FF6A00", "#FF9000", "#FFB700", "#FFDD00", "#FFE200", "#BDFF0C", "#73FF1A", "#3FFA36", "#16F45A", "#00D08B", "#0087CD", "#0048FA", "#0024E3")
   seis <- rev(seis)
   
   
-  names.out <- colnames(network@data[4:49])
-  namesnum <- as.numeric(gsub("Tmn_14_", "", colnames(network@data[4:49])))
-  means <- colMeans(network@data[4:49])
-  SDs <- colStdevs(network@data[4:49])
+  names.out <- colnames(network@data[3:48])
+  namesnum <- as.numeric(gsub("Tmn_14_", "", colnames(network@data[3:48])))
+  means <- colMeans(network@data[3:48])
+  SDs <- colStdevs(network@data[3:48])
   yplus <- means + SDs
   yminus <- means - SDs
   df <- data.frame(means=means, SDs=SDs, names=namesnum)
@@ -484,7 +547,7 @@ library(classInt)
   fix4 <- classIntervals(means, n = 10, style = "fixed",fixedBreaks=c(-1,2,4,6,8,10,12,14,16,18))
   fix4.colors <- findColours(fix4,pal=seis)
 
-  for (i in 4:49)
+  for (i in 3:48)
     {
       
       namey <- gsub("Tmn_14_", "", colnames(network@data)[i])
@@ -499,12 +562,16 @@ library(classInt)
                       ifelse(abs(error_pts@data[,i-1])>1, 1,
                              ifelse(abs(error_pts@data[,i-1])>2, 1.5,
                                     ifelse(abs(error_pts@data[,i-1])>3, 2.0, NA))))
+      
       plot(network, col=fix3.colors, bg="black", fg="white")
       points(error_pts, pch=21, col="black", bg="gray40", cex=cexEr)
-      legend("right", fill = attr(fix3.colors, "palette"), legend = c("0-2","2-4","4-6","6-8","8-10","10-12","12-14","14-16","16-18","20-22"), bty = "n", cex=.5, inset=c(.1,0), text.col="white");
+      
+      legend("right", fill = attr(fix3.colors, "palette"), title="8-day Mn (°C)", legend = c("0-2","2-4","4-6","6-8","8-10","10-12","12-14","14-16","16-18","20-22"), bty = "n", cex=.5, inset=c(.1,0), text.col="white");
+      legend(x=grconvertX(c(0.05, 0.25), from='npc'), 
+             y=grconvertY(c(0.3, 0.5), from='npc'),, title="Model error (°C)", legend = c("0-1","1-2","2-3","3+"), bty = "n", pch=16, pt.cex=c(0.5, 0.75, 1.0, 1.5), col = "gray40", cex=.5, text.col="white");
       
       
-      title("Entiat 8-day mean 2014 ('C)", sub = paste0("Julian Day ", namey), line=-0.9, adj=.80, col.main="white", col.sub="white", outer=FALSE, cex.main=0.5, cex.sub=0.5)
+      title("Entiat 8-day mean 2014 (°C)", sub = paste0("Julian Day ", namey), line=-0.9, adj=.80, col.main="white", col.sub="white", outer=FALSE, cex.main=0.5, cex.sub=0.5)
       tmp2 <- subplot(
         plot(namesnum[1:(i-3)], means[1:(i-3)], col=fix4.colors, pch=16, bty="n", xlim=c(0,360), ylim=c(0,18), cex.main=.8, main="Basin mean (+/-SD)", adj=0, xlab='',ylab='', col.lab="white", cex.axis=0.5, cex.lab = 0.25, col.axis="white", col.main = "white", bg="black"), 
         x=grconvertX(c(0.1,0.45), from='npc'), 
@@ -513,7 +580,7 @@ library(classInt)
         pars=list( mar=c(0,0,0,0)+0.1, cex=0.5))
       op <- par(no.readonly=TRUE)
       par(tmp2)
-      arrows(namesnum[1:(i-3)], yplus[1:(i-3)], namesnum[1:(i-3)], yminus[1:(i-3)], length=0, lwd=10, code=3, lend=0, col="gray20")
+      arrows(namesnum[1:(i-3)], yplus[1:(i-3)], namesnum[1:(i-3)], yminus[1:(i-3)], length=0, lwd=5, code=3, lend=0, col="gray20")
       par(op)
       tmp2 <- subplot(
         plot(namesnum[1:(i-3)], means[1:(i-3)], col=fix4.colors, pch=16, bty="n", xlim=c(0,360), ylim=c(0,18), cex.main=.8, main="Basin mean (+/-SD)", adj=0, xlab='',ylab='', col.lab="white", cex.axis=0.5, cex.lab = 0.25, col.axis="white", col.main = "white", bg="black"), 
@@ -528,5 +595,5 @@ library(classInt)
 
 setwd(paste0(mainPath, longBasin, "/", yearPath, "/graphics2/"))
 
-system('"C:/Program Files/ImageMagick-7.0.1-Q16/convert.exe" -delay 20 -morph 3 *.png Entiat_2014_mn_w_error.mpeg')
+system('"C:/Program Files/ImageMagick-7.0.1-Q16/convert.exe" -delay 20 -morph 3 *.png Entiat_2014_8day_mn.mpeg')
 

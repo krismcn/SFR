@@ -35,10 +35,10 @@ library(ggplot2)
   mainPath <- "D:/OneDrive/work/research/CHaMP/CHaMP_data/"
     
            
-#################################################################
+# ################################################################
 #Logger prediction modeling part
 
-#################################################################
+# ################################################################
   
   
 setwd(paste0(mainPath, midBasin))
@@ -106,9 +106,9 @@ setwd(paste0(mainPath, longBasin, "/", yearPath, "/"))
     
 
 
-################################
+# ###############################
 # full year
-###################################
+# ##################################
 
   y <- NoNA.xyz$y
   x <- NoNA.xyz$x
@@ -161,9 +161,9 @@ setwd(paste0(mainPath, longBasin, "/", yearPath, "/"))
   fit <- lm(y~ pred.y)
   plot(fit)
   summary(fit)
-#####################################
+# ####################################
 # spring/fall
-######################################
+# #####################################
   
 
   coeffs_out <- data.frame(Int=numeric(2), bLST=numeric(2), bLST2=numeric(2), bJul=numeric(2), bElev=numeric(2))
@@ -184,9 +184,9 @@ setwd(paste0(mainPath, longBasin, "/", yearPath, "/"))
   pressstat_sum <- PRESS(sum_mod, verbose = "FALSE")
   pressstat_sum$stat
 
-############################################
+# ###########################################
 # These parts are used as needed
-############################################
+# ###########################################
 
   new_mod <- lm(y ~ I(x^2) + z + e)
   new_sum <- summary(new_mod)
@@ -258,9 +258,9 @@ setwd(paste0(mainPath, longBasin, "/", yearPath, "/"))
   pressstat_sum <- PRESS(sum_mod, verbose = "FALSE")
   pressstat_sum$stat
 
-############################################
+# ###########################################
 # These parts are used as needed
-############################################
+# ###########################################
 
   new_mod <- lm(y ~ x + z + e)
   new_sum <- summary(new_mod)
@@ -330,9 +330,9 @@ write.table(x=metrics_out, append=F,row.names=T, file = paste0("All_data_", basi
   plot(fit)
   summary(fit)
 
-########################################################################################################
-# This part applies the model coefficients to the LST to generate 8-day MAX temp estimates for 1 July - 30 Sept
-########################################################################################################
+# #######################################################################################################
+# This part applies the model coefficients to the LST to generate 8-day temp estimates 
+# #######################################################################################################
   
 
   elev.in <- read.csv(paste0(dataPath, longBasin, "/", basin, "_rca_elev.csv"))
@@ -393,5 +393,209 @@ setwd(paste0(mainPath, basin, "/", yearPath))
   LogPred.out[LogPred.out < -0.5] = -0.5
 
 write.dbf(LogPred.out, file = paste0("predt", yearPath, "_", basin, "_8D_Mn.dbf")) 
+
+# #########################
+#This parts formats the error by day/site info
+# ##########################
+
+  y <- data.sp$y
+  x <- data.sp$x
+  z <- data.sp$z
+  e <- data.sp$e
+  mod <- lm(y ~ x + I(x^2) + z + e)
+  pred.new <- predict(mod, data = data.sp)
+  pred.new[pred.new < -0.5] = -0.5
+  
+  data.sp$pred <- unlist(pred.new)
+  
+  y <- data.fall$y
+  x <- data.fall$x
+  z <- data.fall$z
+  e <- data.fall$e
+  mod <- lm(y ~ x + I(x^2) + z + e)
+  pred.new <- predict(mod, data=data.fall)
+  pred.new[pred.new < -0.5] = -0.5
+  
+  data.fall$pred <- unlist(pred.new)
+  error.pts <- rbind(data.sp, data.fall)
+
+  SiteID <- unique(error.pts$SiteName)
+  SiteID <- as.matrix(SiteID)
+  Error.pts.out <- matrix(nrow=length(SiteID), ncol=47)
+  
+  errorName <- paste0("JulDay_", namesnum)
+  colnames(Error.pts.out)[2:47] <- errorName
+  colnames(Error.pts.out)[1] <- "SiteName"
+  
+  Error.pts.out[1:length(SiteID), 1] <- unlist(SiteID)[1:length(SiteID)]
+
+
+
+  for (i in 1:length(SiteID)) 
+    { 
+      error.site <- error.pts[error.pts$SiteName  == SiteID[i],]
+      error.site$error <- error.site[,'y']-error.site[,'pred']
+      
+      error <- matrix(ncol=1, nrow=46)
+      error[,1] <- namesnum
+      error <- data.frame(error)
+      colnames(error) <- c("JulDay")
+      
+      error.site.fill <- merge(error, error.site, by.x = "JulDay", by.y = "z", all.x=TRUE, all.y = FALSE)
+      Error.pts.out[i,2:47] <- as.numeric(unlist(error.site.fill$error))
+    }
+
+  Error.pts.out <- as.data.frame(Error.pts.out, stringsAsFactors = FALSE)
+  Error.pts.out[,2:47] <- as.numeric(unlist(Error.pts.out[,2:47]))
+  Error.pts.out <- as.data.frame(Error.pts.out)
+  Error.pts.out[,2:47] <- round(Error.pts.out[,2:47], digits=3))
+ 
+setwd(paste0(mainPath, longBasin, "/", yearPath)) 
+write.dbf(Error.pts.out, file = paste0("Error", yearPath, "_", basin, "_8D_Mn.dbf")) 
+write.csv(Error.pts.out, file = paste0("Error", yearPath, "_", basin, "_8D_Mn.csv"))
+
+# ##############################################
+# shapefile output
+# ##############################################
+library(timeSeries)
+library(lattice)
+library(foreign)
+library(doBy)
+library(qpcR)
+library(pls)
+library(boot)
+library(Hmisc)
+library(readxl)
+library(lubridate)
+library(zoo)
+library(car)
+library(gvlma)
+library(ggplot2)
+library(rgdal)
+library(RColorBrewer)
+library(classInt)
+
+basin <- "Lem"
+midBasin <- "Lemhi"
+longBasin <- "Lemhi"
+yrPath <- "14"
+yearPath <- "2014"
+subDir <- "Lemhi/"
+dataPath <- "D:/OneDrive/work/research/CHaMP/GIS/coverages/"
+mainPath <- "D:/OneDrive/work/research/CHaMP/CHaMP_data/"
+
+  seis = c("#AA0000", "#D00000", "#F70000", "#FF1D00", "#FF4400", "#FF6A00", "#FF9000", "#FFB700", "#FFDD00", "#FFE200", "#BDFF0C", "#73FF1A", "#3FFA36", "#16F45A", "#00D08B", "#0087CD", "#0048FA", "#0024E3")
+  seis <- rev(seis)
+
+  setwd(paste0(dataPath, longBasin))
+
+  netname <- paste0(basin, "_STHD_net")
+  network <- readOGR(dsn=".", layer = netname)
+
+  ptsname <- paste0(longBasin, "_sites_rca")
+  pts <- readOGR(dsn=".", layer=ptsname)
+  
+setwd(paste0(mainPath, longBasin, "/", yearPath, "/"))
+
+  network <- spTransform(network, proj4string(pts))
+  preds <- read.dbf(paste0("predt", yearPath, "_", basin, "_8D_Mn.dbf"))
+  netmerge <- merge(network, preds, by.x='RCAID', by.y = 'RCAID')
+  netmerge@data$ReachCode <- as.character(netmerge@data$ReachCode)
+  
+  error <- read.dbf(paste0("Error", yearPath, "_", basin, "_8D_Mn.dbf"))
+  error_pts <- merge(pts, error, by.x='SiteName', by.y='SiteName', all.x=FALSE, all.y=TRUE)
+# #### plot it to make sure it looks right ######### 
+
+
+  fix3 <- classIntervals(netmerge@data[,10], n = 11, style = "fixed",fixedBreaks=c(-1,0,1,2,4,6,8,10,12,14,20))
+  fix3.colors <- findColours(fix3,pal=seis)
+  plot(netmerge, col=fix3.colors, bg="black", fg="white")
+  points(error_pts, pch=16, col="gray40")
+  network <- netmerge
+  
+# #################################################  
+
+setwd(paste0(mainPath, subDir, yearPath))
+  
+  layername <- paste0(basin, "_", yearPath, "_8D_mn")
+  ptslayername <- paste0(basin, "_", yearPath, "_8D_mn_error")
+  
+  writeOGR(netmerge, dsn=".", layer=layername, driver="ESRI Shapefile")
+  writeOGR(error_pts, dsn=".", layer=ptslayername, driver="ESRI Shapefile")
+  
+###############################################
+# animation output
+################################################
+
+library(rgdal)
+library(RColorBrewer)
+library(classInt)
+
+  seis = c("#AA0000", "#D00000", "#F70000", "#FF1D00", "#FF4400", "#FF6A00", "#FF9000", "#FFB700", "#FFDD00", "#FFE200", "#BDFF0C", "#73FF1A", "#3FFA36", "#16F45A", "#00D08B", "#0087CD", "#0048FA", "#0024E3")
+  seis <- rev(seis)
+
+
+  names.out <- colnames(network@data[3:48])
+  namesnum <- as.numeric(gsub("Tmn_14_", "", colnames(network@data[3:48])))
+  means <- colMeans(network@data[3:48], na.rm=TRUE)
+  SDs <- colStdevs(network@data[3:48])
+  yplus <- means + SDs
+  yminus <- means - SDs
+  df <- data.frame(means=means, SDs=SDs, names=namesnum)
+  sequ <- c(1:46)
+  namer <- sprintf('%03d', sequ)
+  fix4 <- classIntervals(means, n = 10, style = "fixed",fixedBreaks=c(-1,2,4,6,8,10,12,14,16,18))
+  fix4.colors <- findColours(fix4,pal=seis)
+
+  for (i in 3:48)
+    {
+      
+      namey <- gsub("Tmn_14_", "", colnames(network@data)[i])
+      
+      filename <- paste0(mainPath, longBasin, "/", yearPath, "/graphics/", namer[i-3], ".png", sep="")
+      png(filename=filename, res = 300, width = 1600, height = 1500, units = "px", bg="black")
+      
+      fix3 <- classIntervals(network@data[,i], n = 11, style = "fixed",fixedBreaks=c(-1,2,4,6,8,10,12,14,16,18,22))
+      fix3.colors <- findColours(fix3,pal=seis)
+      
+      cexEr <- ifelse(abs(error_pts@data[,i-1]) <= 1, 0.5,
+                      ifelse(abs(error_pts@data[,i-1])>1, 1,
+                             ifelse(abs(error_pts@data[,i-1])>2, 1.5,
+                                    ifelse(abs(error_pts@data[,i-1])>3, 2.0, NA))))
+      
+      plot(network, col=fix3.colors, bg="black", fg="white")
+      points(error_pts, pch=21, col="black", bg="gray40", cex=cexEr)
+      
+      legend("right", fill = attr(fix3.colors, "palette"), title="8-day Mn (°C)", legend = c("0-2","2-4","4-6","6-8","8-10","10-12","12-14","14-16","16-18","20-22"), bty = "n", cex=.5, inset=c(.1,0), text.col="white");
+      legend(x=grconvertX(c(0.05, 0.25), from='npc'), 
+             y=grconvertY(c(0.3, 0.5), from='npc'),, title="Model error (°C)", legend = c("0-1","1-2","2-3","3+"), bty = "n", pch=16, pt.cex=c(0.5, 0.75, 1.0, 1.5), col = "gray40", cex=.5, text.col="white");
+      
+      mtext("Lemhi 8-day mean (°C)",side =3, outer=TRUE, line=-3, col="white", cex=.7)
+      mtext(paste0("Julian Day ", namey),side =1, outer=TRUE, line=-4, col="white", cex=.5)
+      
+      tmp2 <- subplot(
+        plot(namesnum[1:(i-3)], means[1:(i-3)], col=fix4.colors, pch=16, bty="n", xlim=c(0,360), ylim=c(0,18), cex.main=.8, main="Basin mean (+/-SD)", adj=0, xlab='',ylab='', col.lab="white", cex.axis=0.5, cex.lab = 0.25, col.axis="white", col.main = "white", bg="black"), 
+        x=grconvertX(c(0.1,0.45), from='npc'), 
+        y=grconvertY(c(0.05, 0.20), from='npc'),
+        size=c(1,1.5), vadj=0.5, hadj=0.5, 
+        pars=list( mar=c(0,0,0,0)+0.1, cex=0.5))
+      op <- par(no.readonly=TRUE)
+      par(tmp2)
+      arrows(namesnum[1:(i-3)], yplus[1:(i-3)], namesnum[1:(i-3)], yminus[1:(i-3)], length=0, lwd=5, code=3, lend=0, col="gray20")
+      par(op)
+      tmp2 <- subplot(
+        plot(namesnum[1:(i-3)], means[1:(i-3)], col=fix4.colors, pch=16, bty="n", xlim=c(0,360), ylim=c(0,18), cex.main=.8, main="Basin mean (+/-SD)", adj=0, xlab='',ylab='', col.lab="white", cex.axis=0.5, cex.lab = 0.25, col.axis="white", col.main = "white", bg="black"), 
+        x=grconvertX(c(0.1,0.45), from='npc'), 
+        y=grconvertY(c(0.05, 0.20), from='npc'),
+        size=c(1,1.5), vadj=0.5, hadj=0.5, 
+        pars=list( mar=c(0,0,0,0)+0.1, cex=0.5))
+      
+      dev.off()
+    }
+
+
+setwd(paste0(mainPath, longBasin, "/", yearPath, "/graphics/"))
+
+system('"C:/Program Files/ImageMagick-7.0.1-Q16/convert.exe" -delay 20 -morph 3 *.png Lemhi_2014_8day_mn.mpeg')
 
 

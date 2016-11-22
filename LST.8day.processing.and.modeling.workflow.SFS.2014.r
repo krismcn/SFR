@@ -33,9 +33,9 @@ library(car)
 library(gvlma)
 library(ggplot2)
 
-  basin <- "JD"
-  midBasin <- "NFJD"
-  longBasin <- "N_Fork_JohnDay"
+  basin <- "SFS"
+  midBasin <- "S_Fork_Salmon"
+  longBasin <- "South_Fork_Salmon"
   yrPath <- "14"
   yearPath <- "2014"
   dataPath <- "D:/OneDrive/work/research/CHaMP/GIS/coverages/"
@@ -440,14 +440,13 @@ write.dbf(LogPred.out, file = paste0("predt", yearPath, "_", basin, "_8D_Mn.dbf"
 
 
   ###############################################
-  #
-  # Edited 18 may 2016 to add animation output
+  # animation output
   ################################################
   
   library(rgdal)
   library(RColorBrewer)
   library(classInt)
-  #library(TeachingDemos)
+  
   
   shpPath <- paste0("D:/OneDrive/work/research/CHaMP/CHaMP_data/2014_temp_CHaMP/")
   

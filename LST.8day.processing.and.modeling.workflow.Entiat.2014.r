@@ -260,7 +260,7 @@ NoNA.xyz <- read.csv(file=paste0(basin, "_", yearPath, "_8Day_model_data.csv"), 
   z <- data.fall$z
   e <- data.fall$e
 
-  mod <- lm(y ~ x + I(x^2) + z + e)
+  
   sum_mod <- summary(mod)
   sum_mod
   pressstat_sum <- PRESS(sum_mod, verbose = "FALSE")

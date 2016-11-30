@@ -192,7 +192,7 @@ rownames(coeffs_out) <- c("Cooling", "Warming")
   pred.out[,4] <- "Cooling"
   pred.out[,5] <- yearPath1
   colnames(pred.out) <- c("Y", "PredY", "JulDay", "Season", "Year")
-  write.table (x=pred.out,append=F,row.names=F,file=paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_sp_fall.csv"),sep = ",", col.names=F)  
+  write.table (x=pred.out,append=F,row.names=F,file=paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_cool_warm.csv"),sep = ",", col.names=F)  
 
   coeffs_out[1,1] <- coeffs[1,1]
   coeffs_out[1,2] <- coeffs[2,1]
@@ -253,7 +253,7 @@ rownames(coeffs_out) <- c("Cooling", "Warming")
   pred.out[,4] <- "Warming"
   pred.out[,5] <- yearPath2
 
-  write.table (x=pred.out,append=T,row.names=F,file=paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_sp_fall.csv"),sep = ",", col.names=F) 
+  write.table (x=pred.out,append=T,row.names=F,file=paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_cool_warm.csv"),sep = ",", col.names=F) 
 
 
   coeffs_out[2,1] <- coeffs[1,1]
@@ -273,7 +273,7 @@ write.table(x=coeffs_out, append=F,row.names=T, file = paste0("All_data_", yrPat
 
 write.table(x=metrics_out, append=F,row.names=T, file = paste0("All_data_", yrPath1, "_", yrPath2, "_mod_metrics_Min.csv"), sep = ",", col.names=NA)
 
-  pred.y <- read.csv(paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_sp_fall.csv"), stringsAsFactors = FALSE)
+  pred.y <- read.csv(paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_cool_warm.csv"), stringsAsFactors = FALSE)
   colnames(pred.y) <- c("Y", "PredY", "JulDay", "Season", "Year")
   
   plot(pred.y$PredY, pred.y$Y, pch=16, col="blue", main="Min 8-day stream temp 2014-2015", xlab="Predicted", ylab="Observed")
@@ -328,8 +328,11 @@ write.table(x=metrics_out, append=F,row.names=T, file = paste0("All_data_", yrPa
     }
 
   LogPred.out <- as.data.frame(LogPred.out)
+ 
+# ##############
+# some plots to make sure the output looks right
+# ##############
   
-
   plot(2:(dim(LogPred.out)[2]-1), LogPred.out[LogPred.out$RCAID == 12,2:(dim(LogPred.out)[2]-1)])
   points(2:(dim(LogPred.out)[2]-1), LogPred.out[LogPred.out$RCAID == 225,2:(dim(LogPred.out)[2]-1)], pch=16, col="blue")
   points(2:(dim(LogPred.out)[2]-1), LogPred.out[LogPred.out$RCAID == 371,2:(dim(LogPred.out)[2]-1)], pch=16, col="green")

@@ -3,14 +3,13 @@
 # minimum stream temperature for a year using MODIS 1km LST data
 # The initial input is two LST_YY.dbfs which are tables (columns = days, rows = grid cells) with the grid value for each grid cell in the spatial extent
 # 
-# Edited Aug 2014 to add the PRESS stastic output
 # Edited 10 March 2016 to process calendar year data into winter year data and add more model diagnostics
 # 
 
 
           
 ##############################################################################################
-# This section reads in the 1km LST data for a year, splices the second half of year1 to the first half of year2
+# This section reads in the 1km LST data for 2 years, splices the second half of year1 to the first half of year2
 # then fills any gaps using a spline function
 ##############################################################################################
 
@@ -39,8 +38,8 @@ library(zoo)
 library(car)
 library(gvlma)
 
-  LST.in.1 <- read.csv(paste0("Ent_LST_", yearPath1, ".csv"), stringsAsFactors = FALSE)
-  LST.in.2 <- read.csv(paste0("Ent_LST_", yearPath2, ".csv"), stringsAsFactors = FALSE)
+  LST.in.1 <- read.csv(paste0(basin, "_LST_", yearPath1, ".csv"), stringsAsFactors = FALSE)
+  LST.in.2 <- read.csv(paste0(basin "_LST_", yearPath2, ".csv"), stringsAsFactors = FALSE)
   
   newnamesnum <- substring (colnames(LST.in.1)[3:39],9,13)
   newnamesnum <- as.numeric(newnamesnum)
@@ -107,7 +106,7 @@ write.dbf(rca_zonal, file = paste0("LST_", yrPath1, "_", yrPath2, "_", basin, "_
 
 
 ##########################################################
-mainPath2 <- "D:/OneDrive/work/research/CHaMP/CHaMP_data/EP_temp/Entiat/"
+mainPath2 <- paste0(mainPath, subDir, "EP_temp/", longBasin, "/")
 
 setwd(paste0(mainPath2))
 
@@ -164,10 +163,9 @@ setwd(paste0(mainPath, "/", subDir, "/", longBasin))
   colnames(NoNA.xyz) <- c("y", "x", "z", "e", "SiteName")
   plot(NoNA.xyz$x, NoNA.xyz$y)
 
-mainPath3 <- "D:/OneDrive/work/research/CHaMP/CHaMP_data/Entiat/"
 subdir2 <- "Min_models/"
 
-setwd(paste0(mainPath3, subdir2, yrPath1, "_", yrPath2, "_Min/"))
+setwd(paste0(mainPath, subDir, longBasin, "/", subdir2, yrPath1, "_", yrPath2, "_Min/"))
 
   write.csv(x=NoNA.xyz, file=paste0(basin, "_", yrPath1, "_", yrPath2, "_8Day_Min_model_data_LST.csv"), row.names = FALSE)
 
@@ -181,7 +179,9 @@ setwd(paste0(mainPath3, subdir2, yrPath1, "_", yrPath2, "_Min/"))
 
 
 #####################################
-# spring/fall
+# cool/warm leg split
+  # splits the winter-year into the cooling leg and warming leg based on the min temp date
+  # also, trims any days before the max temp date on the cooling leg
 ######################################
   NoNA.xyz <- read.csv(paste0(basin, "_", yrPath1, "_", yrPath2, "_8Day_Min_model_data_LST.csv"), stringsAsFactors=FALSE)
   NoNA.xyz <- orderBy(~z, NoNA.xyz)
@@ -243,7 +243,7 @@ rownames(coeffs_out) <- c("Cooling", "Warming")
   pred.out[,4] <- "Cooling"
   pred.out[,5] <- yearPath1
   colnames(pred.out) <- c("Y", "PredY", "JulDay", "Season", "Year")
-  write.table (x=pred.out,append=F,row.names=F,file=paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_sp_fall.csv"),sep = ",", col.names=F)  
+  write.table (x=pred.out,append=F,row.names=F,file=paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_cool_warm.csv"),sep = ",", col.names=F)  
 
   coeffs_out[1,1] <- coeffs[1,1]
   coeffs_out[1,2] <- coeffs[2,1]
@@ -296,7 +296,7 @@ rownames(coeffs_out) <- c("Cooling", "Warming")
   pred.out[,4] <- "Warming"
   pred.out[,5] <- yearPath2
 
-  write.table (x=pred.out,append=T,row.names=F,file=paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_sp_fall.csv"),sep = ",", col.names=F) 
+  write.table (x=pred.out,append=T,row.names=F,file=paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_cool_warm.csv"),sep = ",", col.names=F) 
 
 
   coeffs_out[2,1] <- coeffs[1,1]
@@ -316,7 +316,7 @@ write.table(x=coeffs_out, append=F,row.names=T, file = paste0("All_data_", yrPat
 
 write.table(x=metrics_out, append=F,row.names=T, file = paste0("All_data_", yrPath1, "_", yrPath2, "_mod_metrics_Min.csv"), sep = ",", col.names=NA)
 
-pred.y <- read.csv(paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_sp_fall.csv"), stringsAsFactors = FALSE)
+pred.y <- read.csv(paste0("jk_pred_v_y_Min_", basin, "_", yrPath1, "_", yrPath2, "_cool_warm.csv"), stringsAsFactors = FALSE)
 colnames(pred.y) <- c("Y", "PredY", "JulDay", "Season", "Year")
 
 plot(pred.y$PredY, pred.y$Y, pch=16, col="blue", main="Min 8-day stream temp 2012-2013", xlab="Predicted", ylab="Observed")

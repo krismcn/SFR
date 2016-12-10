@@ -152,6 +152,19 @@ library(foreign)
     
  Data.means <- LST.RV.out   
  write.csv(Data.means, file=paste0(basin, "RV_model_data_12_14.csv"))
+# ################
+# Adding in the NBCD data
+# ################
+ 
+setwd(dataPath)
+ 
+ Data.means <- read.csv(paste0(basin, "RV_model_data_12_14.csv"))
+ View(Data.means)
+ setwd(paste0(dataPath, "NBCD/"))
+ baw <- read.csv(paste0(basin, "_RCA_BAW.csv"))
+ 
+ Data <- merge(Data.means, baw, by="RCAID", all.x=TRUE, all.y=FALSE)
+ Data.means <- Data
 # ###############################
 # full year
 # ##################################
@@ -163,19 +176,96 @@ library(foreign)
   depr <- Data.means$DepR
   bps <- Data.means$BPS
   year <- Data.means$precip
-  yRng <- Data.means$MnRng
-  xRng <- Data.means$mnLST
+  yMnRng <- Data.means$MnRng
+  yAbsRng <- Data.means$AbRng
+  xRng <- Data.means$rngLST
   yMax <- Data.means$Max
   xMax <- Data.means$mxLST
-  
+  baw <- Data.means$NBCD_BAW
   plot(evt, y)
+  plot(baw, y)
 
-  mod <- lm(y ~ x + e + evt + depr + bps + year)
+  mod <- lm(y ~ x + e + evt + depr + bps + baw + year)
   sum_mod <- summary(mod)
+  sum_mod
   
-  mod2 <- lm(yMax ~ xMax + e + evt + depr + bps + year)
+  mod2 <- lm(yMax ~ xMax + e + evt + depr + bps + baw + year)
   sum_mod2 <- summary(mod2)
   sum_mod2
+  
+  mod3 <- lm(y ~ x + evt + year)
+  sum_mod3 <- summary(mod3)
+  sum_mod3
+  
+  mod4 <- lm(y ~ x + depr + year)
+  sum_mod4 <- summary(mod4)
+  sum_mod4
+  
+  mod5 <- lm(y ~ x + bps + year)
+  sum_mod5 <- summary(mod5)
+  sum_mod5
+  
+  mod6 <- lm(y ~ x + baw + year)
+  sum_mod6 <- summary(mod6)
+  sum_mod6
+  
+  mod7 <- lm(yMnRng ~ xRng + e + evt + depr + bps + baw + year)
+  sum_mod7 <- summary(mod7)
+  sum_mod7
+  
+  mod8 <- lm(yMnRng ~ xRng + evt + year)
+  sum_mod8 <- summary(mod8)
+  sum_mod8
+  
+  mod9 <- lm(yMnRng ~ xRng + depr + year)
+  sum_mod9 <- summary(mod9)
+  sum_mod9
+  
+  mod10 <- lm(yMnRng ~ xRng + bps + year)
+  sum_mod10 <- summary(mod10)
+  sum_mod10
+  
+  mod11 <- lm(yMnRng ~ xRng + baw + year)
+  sum_mod11 <- summary(mod11)
+  sum_mod11
+  
+  mod12 <- lm(yMax ~ xMax + evt + year)
+  sum_mod12 <- summary(mod12)
+  sum_mod12
+  
+  mod13 <- lm(yMax ~ xMax + depr + year)
+  sum_mod13 <- summary(mod13)
+  sum_mod13
+  
+  mod14 <- lm(yMax ~ xMax + bps + year)
+  sum_mod14 <- summary(mod14)
+  sum_mod14
+  
+  mod15 <- lm(yMax ~ xMax + baw + year)
+  sum_mod15 <- summary(mod15)
+  sum_mod15
+  
+  mod16 <- lm(yAbsRng ~ xRng + e + evt + depr + bps + baw + year)
+  sum_mod16 <- summary(mod16)
+  sum_mod16
+  
+  mod17 <- lm(yAbsRng ~ xRng + evt + year)
+  sum_mod17 <- summary(mod17)
+  sum_mod17
+  
+  mod18 <- lm(yAbsRng ~ xRng + depr + year)
+  sum_mod18 <- summary(mod18)
+  sum_mod18
+  
+  mod19 <- lm(yAbsRng ~ xRng + bps + year)
+  sum_mod19 <- summary(mod19)
+  sum_mod19
+  
+  mod20 <- lm(yAbsRng ~ xRng + baw + year)
+  sum_mod20 <- summary(mod20)
+  sum_mod20
+  
+  
   
   pred.y <- predict(mod)
   plot(pred.y, y, main = "8-day Mean Full Year")

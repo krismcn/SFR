@@ -1,10 +1,9 @@
 ############################################################################################################
 # This set of R scripts combines a the series of scripts that make up the work flow to predict and validate 
 # stream temperature for a year using MODIS 1km LST data
-# The initial input is an LST_YY.dbf which is a table (columns = days, rows = sites) with the grid value for each grid cell in the spatial extent
+# The initial input is an LST table (columns = days, rows = sites) with the grid value for each grid cell in the spatial extent
 
 # Edited Aug 2014 to add the PRESS stastic output
-# Should look at PRESS output to screen to chose model - only that model will output resids and preds.
 
 
           
@@ -381,7 +380,7 @@ LogPred.out[LogPred.out< -0.5] = -0.5
 LogPred.out$Basin_RCA <- paste0("Ent_", LogPred.out$Ent_RCAID)
 namesnum <- as.numeric(colnames(LogPred.out[1:12]))
 
-names.out <- sprintf("Tmx_13_%03d", namesnum)
+names.out <- sprintf("Tmn_13_%03d", namesnum)
 colnames(LogPred.out)[1:12] <- names.out[1:12]
 
 
@@ -630,4 +629,69 @@ RMSEP <- sqrt(mean(all_resids^2))
   
   system('"C:/Program Files/ImageMagick-7.0.1-Q16/convert.exe" -delay 20 -morph 3 *.png Entiat_2013_8day_mn.mpeg')
   
+# #############################################
+# wiki image ouput
+# ##############################################
+
+  seis = c("#AA0000", "#D00000", "#F70000", "#FF1D00", "#FF4400", "#FF6A00", "#FF9000", "#FFB700", "#FFDD00", "#FFE200", "#BDFF0C", "#73FF1A", "#3FFA36", "#16F45A", "#00D08B", "#0087CD", "#0048FA", "#0024E3")
+  seis <- rev(seis)
   
+  
+  
+  namesnum <- as.numeric(gsub("Tmn_13", "", colnames(network@data[3:48])))
+  means <- colMeans(network@data[3:48])
+  SDs <- colStdevs(network@data[3:48])
+  yplus <- means + SDs
+  yminus <- means - SDs
+  df <- data.frame(means=means, SDs=SDs, names=namesnum)
+  sequ <- c(1:46)
+  namer <- sprintf('%03d', sequ)
+  fix4 <- classIntervals(means, n = 10, style = "fixed",fixedBreaks=c(-1,2,4,6,8,10,12,14,16,18))
+  fix4.colors <- findColours(fix4,pal=seis)
+  
+    for (i in 28:32)
+      {
+        
+        namey <- gsub("Tmn_13", "", colnames(network@data)[i])
+        
+        filename <- paste0(mainPath, longBasin, "/", yearPath, "/graphics2/", namer[i-3], ".png", sep="")
+        png(filename=filename, res = 300, width = 1500, height = 1500, units = "px", bg="white")
+        
+        fix3 <- classIntervals(network@data[,i], n = 11, style = "fixed",fixedBreaks=c(-1,2,4,6,8,10,12,14,16,18,22))
+        fix3.colors <- findColours(fix3,pal=seis)
+        
+        cexEr <- ifelse(abs(error_pts@data[,i]) == 0, 0, 
+                        ifelse(abs(error_pts@data[,i]) > 0, 0.5,
+                               ifelse(abs(error_pts@data[,i])>1, 1,
+                                      ifelse(abs(error_pts@data[,i])>2, 1.5,
+                                             ifelse(abs(error_pts@data[,i])>3, 2.0, NA)))))
+        
+        plot(network, col=fix3.colors, bg="white", fg="black")
+        points(error_pts, pch=21, col="black", bg="gray40", cex=cexEr)
+        
+        legend("right", fill = attr(fix3.colors, "palette"), title="8-day Mn (°C)", legend = c("0-2","2-4","4-6","6-8","8-10","10-12","12-14","14-16","16-18","20-22"), bty = "n", cex=.5, inset=c(.1,0), text.col="black");
+        legend(x=grconvertX(c(0.05, 0.25), from='npc'), 
+               y=grconvertY(c(0.3, 0.5), from='npc'),, title="Model error (°C)", legend = c("0-1","1-2","2-3","3+"), bty = "n", pch=16, pt.cex=c(0.5, 0.75, 1.0, 1.5), col = "gray40", cex=.5, text.col="black");
+        
+        
+        title("Entiat 8-day mean 2013 (°C)", sub = paste0("Julian Day ", namey), line=-0.9, adj=.80, col.main="black", col.sub="black", outer=FALSE, cex.main=0.5, cex.sub=0.5)
+        tmp2 <- subplot(
+          plot(namesnum[1:(i-3)], means[1:(i-3)], col=fix4.colors, pch=16, bty="n", xlim=c(0,360), ylim=c(0,18), cex.main=.8, main="Basin mean (+/-SD)", adj=0, xlab='',ylab='', col.lab="black", cex.axis=0.5, cex.lab = 0.25, col.axis="black", col.main = "black", bg="white"), 
+          x=grconvertX(c(0.1,0.45), from='npc'), 
+          y=grconvertY(c(0.05, 0.20), from='npc'),
+          size=c(1,1.5), vadj=0.5, hadj=0.5, 
+          pars=list( mar=c(0,0,0,0)+0.1, cex=0.5))
+        op <- par(no.readonly=TRUE)
+        par(tmp2)
+        arrows(namesnum[1:(i-3)], yplus[1:(i-3)], namesnum[1:(i-3)], yminus[1:(i-3)], length=0, lwd=5, code=3, lend=0, col="gray90")
+        par(op)
+        tmp2 <- subplot(
+          plot(namesnum[1:(i-3)], means[1:(i-3)], col=fix4.colors, pch=16, bty="n", xlim=c(0,360), ylim=c(0,18), cex.main=.8, main="Basin mean (+/-SD)", adj=0, xlab='',ylab='', col.lab="black", cex.axis=0.5, cex.lab = 0.25, col.axis="black", col.main = "black", bg="white"), 
+          x=grconvertX(c(0.1,0.45), from='npc'), 
+          y=grconvertY(c(0.05, 0.20), from='npc'),
+          size=c(1,1.5), vadj=0.5, hadj=0.5, 
+          pars=list( mar=c(0,0,0,0)+0.1, cex=0.5))
+        
+        dev.off()
+      }
+    

@@ -1,15 +1,12 @@
 ############################################################################################################
 # This set of R scripts combines a the series of scripts that make up the work flow to predict and validate 
 # stream temperature using MODIS 1km LST data
-# The initial input is an LST_YY.dbf which is a table (columns = days, rows = sites) with the grid value for each grid cell in the spatial extent
-# 
+# The initial input is an LST zonal mean by RCA .dbf, stream temperature logger data, 
+# and a site ID table to cross-walk RCAIDs and Elevation to the LST and logger data.
+#
 # Edited Aug 2014 to add the PRESS stastic output
-# Should look at PRESS output to screen to chose model - only that model will output resids and preds.
-
-# Edited Aug 2014 to add the PRESS stastic output
-# Edited Oct 2015 for EP watershed summer output
 # Edited Jan 2016 to update the gap-filling interpolation functions
-# Edited 28 March 2016 for Secesh
+
 
 
 library(timeSeries)
@@ -169,7 +166,7 @@ library(ggplot2)
   summary(fit)
   
 # ####################################
-# spring/fall
+# spring/fall temporal split
 # #####################################
   
   setwd(paste0(mainPath, longBasin, "/", yearPath))

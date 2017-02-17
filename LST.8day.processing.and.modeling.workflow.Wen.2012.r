@@ -1,14 +1,10 @@
 ############################################################################################################
 # This set of R scripts combines a the series of scripts that make up the work flow to predict and validate 
-# stream temperature for annual 8-day means from MODIS 1km LST data
-# The initial input is an LST_YY.dbf which is a table (columns = days, rows = sites) with the grid value for each grid cell in the spatial extent
-# 
-# Edited Aug 2014 to add the PRESS statistic
+# stream temperature for a year using MODIS 1km LST data
+# The initial input is an LST_YY.dbf which is a table (columns = days, rows = sites) with the grid value for each grid cell in the spatial extent.
+# Should do a search-and-replace for the output folder (usually dated), and the year being processed, in both a YYYY and a _YY format.
 
-# Edited Jan 2016 to update the gap-filling interpolation functions
-# Edited April 2016 to add model quality testing and pull hard-coded file paths out of the code.
-
-##############################################################################################
+# Edited Aug 2014 to add the PRESS stastic output
 
 
 library(timeSeries)
@@ -396,30 +392,6 @@ write.dbf(LogPred.out, file = paste0("predt", yearPath, "_", basin, "_8D_Mn.dbf"
 #This parts formats the error by day/site info
 ###########################
 
-  # NoNA.xyz <- read.csv(paste0(basin, "_", yearPath, "_8Day_model_data.csv"), stringsAsFactors = TRUE)
-  # NoNA.xyz <- orderBy(~z, NoNA.xyz)
-  # maxrow <- which.max(NoNA.xyz$y)
-  # data.sp <- NoNA.xyz[1:(maxrow-1),]
-  # data.fall <- NoNA.xyz[maxrow:nrow(NoNA.xyz),]
-  # 
-  # y <- data.sp$y
-  # x <- data.sp$x
-  # z <- data.sp$z
-  # e <- data.sp$e
-  # mod <- lm(y ~ x + I(x^2) + z + e)
-  # pred.new <- predict(mod, data = data.sp)
-  # pred.new[pred.new < -0.5] = -0.5
-  # data.sp$pred <- unlist(pred.new)
-  # 
-  # y <- data.fall$y
-  # x <- data.fall$x
-  # z <- data.fall$z
-  # e <- data.fall$e
-  # mod <- lm(y ~ x + I(x^2) + z + e)
-  # pred.new <- predict(mod, data=data.fall)
-  # pred.new[pred.new < -0.5] = -0.5
-  # data.fall$pred <- unlist(pred.new)
-  # 
   error.pts <- rbind(data.sp, data.fall)
   SiteID <- unique(error.pts$SiteName)
   SiteID <- as.matrix(SiteID)
@@ -457,7 +429,7 @@ write.csv(Error.pts.out, file = paste0("Error", yearPath, "_", basin, "_8D_Mn.cs
 
 ###############################################
 #
-# Edited 5 may 2016 to add animation output
+# Edited 5 May 2016 to add animation output
 # Edited 25 May 2016 to add HUC display
 ################################################
 

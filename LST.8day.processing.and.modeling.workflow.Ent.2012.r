@@ -1,12 +1,10 @@
 ############################################################################################################
 # This set of R scripts combines a the series of scripts that make up the work flow to predict and validate 
 # stream temperature for a year using MODIS 1km LST data
-# The initial input is an LST_YY.dbf which is a table (columns = days, rows = sites) with the grid value for each grid cell in the spatial extent
-# Currently set up for the John Day which has 12039 grid cells and 5532 RCAs (those parameters can be changed for other regions).
+# The initial input is an LST_YY.dbf which is a table (columns = days, rows = sites) with the grid value for each grid cell in the spatial extent.
 # Should do a search-and-replace for the output folder (usually dated), and the year being processed, in both a YYYY and a _YY format.
 
 # Edited Aug 2014 to add the PRESS stastic output
-# Should look at PRESS output to screen to chose model - only that model will output resids and preds.
 
 
           
@@ -124,27 +122,12 @@ setwd("D:/Dropbox/work/research/CHaMP/CHaMP_data/Entiat")
 ID.in <- read.csv("Ent_sites_elev.csv")
 Log.in <- read.csv("Ent_temp_data_2012.csv")
 
-#Log.in[Log.in<0] = 0.0
- 
+
 LST.in <- read.dbf("D:/Dropbox/work/research/CHaMP/CHaMP_data/Entiat/LST12_Ent_RCA.dbf")
 colnames(LST.in)<-gsub("X", "", colnames(LST.in))
-#newnamesnum <- as.numeric(substring(colnames(LST.in)[1:46],3,5));    #specifies those dates to be numeric in order to drop the leading zeros
 newnamesnum <- as.numeric(colnames(LST.in)[1:46]);
 colnames(LST.in)[1:46] <- newnamesnum;
 
-#newnames <- substring (colnames(LST.in)[1:46],7,11); #clips the MODIS grid names down to the julian date
-#newnamesnum <- as.numeric(newnames);    #specifies those dates to be numeric in order to drop the leading zeros
-#colnames(LST.in)[1:46] <- newnamesnum;
-
-#LST.zoo <- zoo(t(LST.in[,1:46]))
-#LST.zoo.sm <- rollapply(LST.zoo, 2, (mean), by.column = TRUE, na.rm = T, align="right", partial = 1, fill = NA)
-#LST.zoo.out <- as.data.frame(t(LST.zoo.sm))
-#LST.zoo.out <- round(LST.zoo.out, digits = 2)
-#colnames(LST.zoo.out) <- colnames(LST.in[1:46])
-#rownames(LST.zoo.out) <- NULL
-
-#LST.zoo.out$GRID_CODE <- GrPolID
-#write.dbf(LST.zoo.out, file = "D:/Dropbox/work/research/CHaMP/CHaMP_data/Entiat/LST12_Ent_kmpt_smoothed.dbf")
 
 coeffs_out <- data.frame(sp_Jul_Int=numeric(4), sp_Jul_bLST=numeric(4), sp_Jul_bJul=numeric(4), fall_Jul_Int=numeric(4), fall_Jul_bLST=numeric(4), fall_Jul_bJul=numeric(4), sp_poly_Int=numeric(4), sp_poly_bLST=numeric(4), fall_poly_Int=numeric(4), fall_poly_bLST=numeric(4), sp_poly_bLST2=numeric(4), fall_poly_bLST2=numeric(4))
 stats_out <- data.frame(sp_Jul_RMSE=numeric(4), sp_Jul_r2=numeric(4), fall_Jul_RMSE=numeric(4), fall_Jul_r2=numeric(4), sp_poly_RMSE=numeric(4), sp_poly_r2=numeric(4), fall_poly_RMSE=numeric(4), fall_poly_r2=numeric(4))
@@ -313,7 +296,6 @@ rm(list = ls())
 setwd("D:/Dropbox/work/research/CHaMP/CHaMP_data/Entiat/23Aug14modeling")
 LST.in <- read.dbf("D:/Dropbox/work/research/CHaMP/CHaMP_data/Entiat/LST12_Ent_RCA.dbf")
 colnames(LST.in)<-gsub("X", "", colnames(LST.in))
-#newnamesnum <- as.numeric(substring(colnames(LST.in)[1:46],3,5));    #specifies those dates to be numeric in order to drop the leading zeros
 newnamesnum <- as.numeric(colnames(LST.in)[1:46])
 colnames(LST.in)[1:46] <- newnamesnum;
 

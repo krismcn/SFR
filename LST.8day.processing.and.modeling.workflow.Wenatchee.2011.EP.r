@@ -3,20 +3,15 @@
 # stream temperature for a summer max temps MODIS 1km LST data
 # The initial input is an LST_YY.dbf which is a table (columns = days, rows = sites) with the grid value for each grid cell in the spatial extent
 # 
-# Edited Aug 2014 to add the PRESS stastic output
-# Should look at PRESS output to screen to chose model - only that model will output resids and preds.
-
+# Edited Aug 2014 to add the PRESS stastic output 
 # Edited Oct 2015 for EP watershed summer output
 # Edited Jan 2016 to update the gap-filling interpolation functions
-# Edited Aug 2014 to add the PRESS stastic output
-# Edited 28 March 2016 for Secesh
+
 
 ##############################################################################################
-# This section reads in the 1km LST data for a year, uses a 4th order polynomial to fill in Julian day 1 & 365 (if they are missing)
-# then fills any remaining gaps across the year at each pixel with a linear interpolation.
+# This section reads in the 1km LST data for a year, 
+# fills any gaps across the year at each pixel with a splinic interpolation.
 ##############################################################################################
-
-# The Secesh is a sub-basin of the SFS, so some of the file paths point there
 
 library(timeSeries)
 library(lattice)
